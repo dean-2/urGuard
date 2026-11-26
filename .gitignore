@@ -1,13 +1,35 @@
 /module.md
+# Environment & local secrets
 .env
-*.bbolt
+.env.*
+!.env.example
+
+# Databases & WAL artifacts
 *.db
-/bin/
-/backend/bin/
-/build/
-*.exe
-*.test
-node_modules/
-dist/
-*.key
+*.db-wal
+*.db-shm
+*.bolt
+data/
+
+# Certificates & key material (generated at runtime only)
 *.pem
+*.key
+*.crt
+certs/
+
+# Build outputs & dependencies
+node_modules
+node_modules/
+dist
+dist/
+bin
+bin/
+coverage
+coverage/
+.vite/
+
+# Logs & OS files
+*.log
+*.exe
+.DS_Store
+Thumbs.db
