@@ -15,8 +15,8 @@ func (h eventMinHeap) Less(i, j int) bool {
 	}
 	return h[i].AdjustedTimeUTC.Before(h[j].AdjustedTimeUTC)
 }
-func (h eventMinHeap) Swap(i, j int)       { h[i], h[j] = h[j], h[i] }
-func (h *eventMinHeap) Push(x any)        { *h = append(*h, x.(NormalizedEvent)) }
+func (h eventMinHeap) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
+func (h *eventMinHeap) Push(x any)   { *h = append(*h, x.(NormalizedEvent)) }
 func (h *eventMinHeap) Pop() any {
 	old := *h
 	n := len(old)

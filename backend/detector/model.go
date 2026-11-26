@@ -6,16 +6,16 @@ import "time"
 type Classification string
 
 const (
-	ClassRoutine                 Classification = "routine"
-	ClassBenignAdmin             Classification = "approved_change"
-	ClassRoutineDenial           Classification = "routine_denial"
-	ClassIsolatedDenial          Classification = "isolated_denial"
-	ClassRoutineDelayed          Classification = "routine_delayed_delivery"
-	ClassRoutineClockOffset      Classification = "routine_clock_offset"
-	ClassUnexpectedRoleChange    Classification = "unexpected_role_change"
-	ClassReviewAfterRoleChange   Classification = "review_after_role_change"
+	ClassRoutine                  Classification = "routine"
+	ClassBenignAdmin              Classification = "approved_change"
+	ClassRoutineDenial            Classification = "routine_denial"
+	ClassIsolatedDenial           Classification = "isolated_denial"
+	ClassRoutineDelayed           Classification = "routine_delayed_delivery"
+	ClassRoutineClockOffset       Classification = "routine_clock_offset"
+	ClassUnexpectedRoleChange     Classification = "unexpected_role_change"
+	ClassReviewAfterRoleChange    Classification = "review_after_role_change"
 	ClassLateralMovementCandidate Classification = "lateral_movement_candidate"
-	ClassRateAnomaly             Classification = "rate_anomaly"
+	ClassRateAnomaly              Classification = "rate_anomaly"
 )
 
 // NormalizedEvent is the unified event schema ingested from Track-4-Toolkit CSV/JSON
@@ -74,17 +74,17 @@ type OrderAlternative struct {
 
 // Alert is an explainable detection output with zero AI/ML black-box fields.
 type Alert struct {
-	AlertID          string             `json:"alert_id"`
-	Identity         string             `json:"identity"`
-	Classification   Classification     `json:"classification"`
-	PathOrRule       string             `json:"path_or_rule"`
-	Services         []string           `json:"services"`
-	EventIDs         []string           `json:"event_ids"`
-	Explanation      string             `json:"explanation"`
-	ConfidenceScore  float64            `json:"confidence_score"`
-	OrderUncertain   bool               `json:"order_uncertain"`
+	AlertID           string             `json:"alert_id"`
+	Identity          string             `json:"identity"`
+	Classification    Classification     `json:"classification"`
+	PathOrRule        string             `json:"path_or_rule"`
+	Services          []string           `json:"services"`
+	EventIDs          []string           `json:"event_ids"`
+	Explanation       string             `json:"explanation"`
+	ConfidenceScore   float64            `json:"confidence_score"`
+	OrderUncertain    bool               `json:"order_uncertain"`
 	PossibleOrderings []OrderAlternative `json:"possible_orderings,omitempty"`
-	DetectedAtUTC    time.Time          `json:"detected_at_utc"`
+	DetectedAtUTC     time.Time          `json:"detected_at_utc"`
 }
 
 // EventVerdict pairs a normalized event with its deterministic classification and rule ID.
