@@ -1,0 +1,13 @@
+/module.md
+.env
+*.bbolt
+*.db
+/bin/
+/backend/bin/
+/build/
+*.exe
+*.test
+node_modules/
+dist/
+*.key
+*.pem

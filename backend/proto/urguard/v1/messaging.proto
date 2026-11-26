@@ -1,0 +1,167 @@
+syntax = "proto3";
+
+package urguard.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/dean-2/urGuard/backend/gen/urguard/v1;urguardv1";
+
+service MessagingService {
+  // Publish a recipient-signed ephemeral pre-key offer for a single handshake.
+  rpc PublishSessionOffer(PublishSessionOfferRequest) returns (PublishSessionOfferResponse);
+  rpc GetSessionOffer(GetSessionOfferRequest) returns (GetSessionOfferResponse);
+  // Consume the offer atomically and queue the signed handshake for its recipient.
+  rpc OpenSession(OpenSessionRequest) returns (OpenSessionResponse);
+  rpc RequestResumeChallenge(RequestResumeChallengeRequest) returns (RequestResumeChallengeResponse);
+  // Verify the authenticated device's signature over the nonce and session ID.
+  rpc ResumeSession(ResumeSessionRequest) returns (ResumeSessionResponse);
+  rpc SendEnvelope(SendEnvelopeRequest) returns (SendEnvelopeResponse);
+  rpc SendChunk(SendChunkRequest) returns (SendChunkResponse);
+  rpc FinalizeTransfer(FinalizeTransferRequest) returns (FinalizeTransferResponse);
+  rpc GetInbox(GetInboxRequest) returns (GetInboxResponse);
+}
+
+enum DeliveryStatus {
+  DELIVERY_STATUS_UNSPECIFIED = 0;
+  DELIVERY_STATUS_DELIVERED = 1;
+  DELIVERY_STATUS_FAILED = 2;
+}
+
+message InboxItem {
+  string message_id = 1;
+  oneof payload {
+    SessionHandshake handshake = 2;
+    EncryptedEnvelope envelope = 3;
+    EncryptedChunk chunk = 4;
+  }
+}
+
+message SessionOffer {
+  string offer_id = 1;
+  string recipient_id = 2;
+  string recipient_device_id = 3;
+  bytes ephemeral_x25519_public_key = 4;
+  bytes ephemeral_mlkem768_public_key = 5;
+  google.protobuf.Timestamp expires_at = 6;
+  bytes recipient_signature = 7;
+}
+
+message SessionHandshake {
+  string session_id = 1;
+  string sender_id = 2;
+  string sender_device_id = 3;
+  SessionOffer offer = 4;
+  bytes ephemeral_x25519_public_key = 5;
+  bytes mlkem768_ciphertext = 6;
+  uint64 key_epoch = 7;
+  bytes sender_signature = 8;
+}
+
+message EnvelopeHeader {
+  string sender_id = 1;
+  string recipient_id = 2;
+  string session_id = 3;
+  uint64 key_epoch = 4;
+  uint64 msg_seq = 5;
+  bytes nonce = 6;
+  google.protobuf.Timestamp timestamp = 7;
+  string sender_device_id = 8;
+  string recipient_device_id = 9;
+}
+
+message EncryptedEnvelope {
+  EnvelopeHeader header = 1;
+  bytes ciphertext = 2;
+  bytes sender_signature = 3;
+}
+
+message EncryptedChunk {
+  // Bind the transfer fields below to the envelope during encryption and signing.
+  EncryptedEnvelope envelope = 1;
+  string transfer_id = 2;
+  uint32 chunk_index = 3;
+  uint32 total_chunks = 4;
+  bytes chunk_hash = 5;
+  bytes root_manifest_hash = 6;
+}
+
+message PublishSessionOfferRequest {
+  SessionOffer offer = 1;
+}
+
+message PublishSessionOfferResponse {}
+
+message GetSessionOfferRequest {
+  string recipient_device_id = 1;
+}
+
+message GetSessionOfferResponse {
+  SessionOffer offer = 1;
+}
+
+message OpenSessionRequest {
+  SessionHandshake handshake = 1;
+}
+
+message OpenSessionResponse {
+  string session_id = 1;
+  bytes resumption_ticket = 2;
+}
+
+message RequestResumeChallengeRequest {
+  string session_id = 1;
+  bytes resumption_ticket = 2;
+}
+
+message RequestResumeChallengeResponse {
+  bytes challenge_nonce = 1;
+  google.protobuf.Timestamp expires_at = 2;
+}
+
+message ResumeSessionRequest {
+  string session_id = 1;
+  bytes resumption_ticket = 2;
+  bytes challenge_nonce = 3;
+  bytes peer_signature = 4;
+}
+
+message ResumeSessionResponse {
+  bytes resumption_ticket = 1;
+}
+
+message SendEnvelopeRequest {
+  EncryptedEnvelope envelope = 1;
+}
+
+message SendEnvelopeResponse {
+  string message_id = 1;
+}
+
+message SendChunkRequest {
+  EncryptedChunk chunk = 1;
+}
+
+message SendChunkResponse {}
+
+message FinalizeTransferRequest {
+  string transfer_id = 1;
+  string session_id = 2;
+  uint32 total_chunks = 3;
+  bytes root_manifest_hash = 4;
+  bytes sender_signature = 5;
+}
+
+message FinalizeTransferResponse {
+  DeliveryStatus status = 1;
+}
+
+message GetInboxRequest {
+  string recipient_device_id = 1;
+  string page_token = 2;
+  uint32 page_size = 3;
+}
+
+message GetInboxResponse {
+  repeated InboxItem items = 1;
+  string next_page_token = 2;
+}
