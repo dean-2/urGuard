@@ -13,9 +13,12 @@ type RuleEngine struct {
 	approvalsByID       map[string]ApprovalRule
 	taintedSessions     map[string]string // session_id -> triggering event_id
 	ewmaRateByActor     map[string]float64
+	sampleCountByActor  map[string]int
 	lastEventTimeActor  map[string]time.Time
 	ewmaAlpha           float64
 	rateSpikeMultiplier float64
+	minBaselineSamples  int
+	minBurstRatePerSec  float64
 }
 
 // NewRuleEngine initializes the deterministic rule engine with change-control approvals.
@@ -28,15 +31,18 @@ func NewRuleEngine(approvals []ApprovalRule) *RuleEngine {
 		approvalsByID:       byID,
 		taintedSessions:     make(map[string]string),
 		ewmaRateByActor:     make(map[string]float64),
+		sampleCountByActor:  make(map[string]int),
 		lastEventTimeActor:  make(map[string]time.Time),
 		ewmaAlpha:           0.3,
 		rateSpikeMultiplier: 5.0,
+		minBaselineSamples:  5,
+		minBurstRatePerSec:  2.0,
 	}
 }
 
 // Evaluate applies context-aware rules to a single event (after watermark ordering).
 func (re *RuleEngine) Evaluate(ev NormalizedEvent) (EventVerdict, *Alert) {
-	re.updateEWMA(ev)
+	rateSpike, instRate, baselineRate := re.updateEWMA(ev)
 
 	// 1. Role administration & escalation checks.
 	if ev.Action == "approve_role_change" || ev.Action == "revoke_role" {
@@ -146,7 +152,29 @@ func (re *RuleEngine) Evaluate(ev NormalizedEvent) (EventVerdict, *Alert) {
 		}, nil
 	}
 
-	// 4. Clock offset / delayed delivery observability (routine unless paired with rule violations).
+	// 4. EWMA rate-spike anomaly check (only after sufficient baseline samples).
+	if rateSpike {
+		alert := &Alert{
+			AlertID:         "alert-rate-" + ev.EventID,
+			Identity:        ev.Actor,
+			Classification:  ClassRateAnomaly,
+			PathOrRule:      "RULE_EWMA_RATE_SPIKE",
+			Services:        []string{ev.SourceService, ev.TargetService},
+			EventIDs:        []string{ev.EventID},
+			Explanation:     fmt.Sprintf("Actor %s request rate %.2f/s exceeded %.1fx EWMA baseline (%.2f/s)", ev.Actor, instRate, re.rateSpikeMultiplier, baselineRate),
+			ConfidenceScore: 0.88,
+			DetectedAtUTC:   ev.ReceivedTimeUTC,
+		}
+		return EventVerdict{
+			Event:          ev,
+			Classification: ClassRateAnomaly,
+			RuleID:         alert.PathOrRule,
+			Reason:         alert.Explanation,
+			AlertID:        alert.AlertID,
+		}, alert
+	}
+
+	// 5. Clock offset / delayed delivery observability (routine unless paired with rule violations).
 	if ev.SourceClockOffsetMs != 0 {
 		return EventVerdict{
 			Event:          ev,
@@ -219,11 +247,12 @@ func (re *RuleEngine) IsWithinApprovedScope(ev NormalizedEvent) bool {
 	return true
 }
 
-func (re *RuleEngine) updateEWMA(ev NormalizedEvent) {
+func (re *RuleEngine) updateEWMA(ev NormalizedEvent) (bool, float64, float64) {
+	re.sampleCountByActor[ev.Actor]++
 	prev, ok := re.lastEventTimeActor[ev.Actor]
 	re.lastEventTimeActor[ev.Actor] = ev.AdjustedTimeUTC
 	if !ok {
-		return
+		return false, 0, 0
 	}
 	dt := ev.AdjustedTimeUTC.Sub(prev).Seconds()
 	if dt <= 0.001 {
@@ -233,8 +262,12 @@ func (re *RuleEngine) updateEWMA(ev NormalizedEvent) {
 	oldEWMA := re.ewmaRateByActor[ev.Actor]
 	if oldEWMA == 0 {
 		re.ewmaRateByActor[ev.Actor] = instRate
-		return
+		return false, instRate, 0
 	}
+	spike := re.sampleCountByActor[ev.Actor] >= re.minBaselineSamples &&
+		instRate >= re.minBurstRatePerSec &&
+		instRate > oldEWMA*re.rateSpikeMultiplier
 	re.ewmaRateByActor[ev.Actor] = re.ewmaAlpha*instRate + (1-re.ewmaAlpha)*oldEWMA
 	_ = math.Abs(instRate - oldEWMA)
+	return spike, instRate, oldEWMA
 }
