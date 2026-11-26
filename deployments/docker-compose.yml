@@ -1,0 +1,192 @@
+services:
+  certs-init:
+    image: alpine:3.21.3
+    env_file:
+      - path: ../.env
+        required: false
+    environment:
+      URGUARD_RUNTIME_CERT_DIR: /certs
+    volumes:
+      - ./gen-certs.sh:/scripts/gen-certs.sh:ro
+      - urguard-certs:/certs
+    command: ["sh", "-c", "apk add --no-cache bash openssl >/dev/null && bash /scripts/gen-certs.sh"]
+    restart: "no"
+
+  controlplane:
+    build:
+      context: ..
+      dockerfile: deployments/controlplane.Dockerfile
+    env_file:
+      - path: ../.env
+        required: false
+    environment:
+      URGUARD_ROLE: controlplane
+      URGUARD_LISTEN_ADDR: ":8080"
+      URGUARD_ROTATION_GRACE_SEC: "${URGUARD_ROTATION_GRACE_SEC:-30}"
+      URGUARD_MAX_CLOCK_SKEW_SEC: "${URGUARD_MAX_CLOCK_SKEW_SEC:-30}"
+      URGUARD_CRL_HEARTBEAT_SEC: "${URGUARD_CRL_HEARTBEAT_SEC:-1}"
+      URGUARD_LOG_CHECKPOINT_INTERVAL: "${URGUARD_LOG_CHECKPOINT_INTERVAL:-50}"
+      URGUARD_TLS_MODE: "${URGUARD_TLS_MODE:-pqc-mtls}"
+      URGUARD_DATA_DIR: /var/lib/urguard/data
+      URGUARD_RUNTIME_CERT_DIR: /var/lib/urguard/certs
+    ports:
+      - "${URGUARD_CONTROLPLANE_PORT:-8080}:8080"
+    volumes:
+      - controlplane-data:/var/lib/urguard/data
+      - urguard-certs:/var/lib/urguard/certs:ro
+    depends_on:
+      certs-init:
+        condition: service_completed_successfully
+    networks:
+      - urguard-net
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck", "http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  node-a:
+    build:
+      context: ..
+      dockerfile: deployments/node.Dockerfile
+    env_file:
+      - path: ../.env
+        required: false
+    environment:
+      URGUARD_NODE_ID: node-a
+      URGUARD_LISTEN_ADDR: ":8081"
+      URGUARD_CONTROLPLANE_URL: https://controlplane:8080
+      URGUARD_ROTATION_GRACE_SEC: "${URGUARD_ROTATION_GRACE_SEC:-30}"
+      URGUARD_TLS_MODE: "${URGUARD_TLS_MODE:-pqc-mtls}"
+      URGUARD_DATA_DIR: /var/lib/urguard/data
+      URGUARD_RUNTIME_CERT_DIR: /var/lib/urguard/certs
+    ports:
+      - "${URGUARD_NODE_A_PORT:-8081}:8081"
+    volumes:
+      - node-a-data:/var/lib/urguard/data
+      - urguard-certs:/var/lib/urguard/certs:ro
+    depends_on:
+      certs-init:
+        condition: service_completed_successfully
+      controlplane:
+        condition: service_healthy
+    networks:
+      - urguard-net
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck", "http://127.0.0.1:8081/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  node-b:
+    build:
+      context: ..
+      dockerfile: deployments/node.Dockerfile
+    env_file:
+      - path: ../.env
+        required: false
+    environment:
+      URGUARD_NODE_ID: node-b
+      URGUARD_LISTEN_ADDR: ":8081"
+      URGUARD_CONTROLPLANE_URL: https://controlplane:8080
+      URGUARD_ROTATION_GRACE_SEC: "${URGUARD_ROTATION_GRACE_SEC:-30}"
+      URGUARD_TLS_MODE: "${URGUARD_TLS_MODE:-pqc-mtls}"
+      URGUARD_DATA_DIR: /var/lib/urguard/data
+      URGUARD_RUNTIME_CERT_DIR: /var/lib/urguard/certs
+    ports:
+      - "${URGUARD_NODE_B_PORT:-8082}:8081"
+    volumes:
+      - node-b-data:/var/lib/urguard/data
+      - urguard-certs:/var/lib/urguard/certs:ro
+    depends_on:
+      certs-init:
+        condition: service_completed_successfully
+      controlplane:
+        condition: service_healthy
+    networks:
+      - urguard-net
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck", "http://127.0.0.1:8081/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  node-c:
+    build:
+      context: ..
+      dockerfile: deployments/node.Dockerfile
+    env_file:
+      - path: ../.env
+        required: false
+    environment:
+      URGUARD_NODE_ID: node-c
+      URGUARD_LISTEN_ADDR: ":8081"
+      URGUARD_CONTROLPLANE_URL: https://controlplane:8080
+      URGUARD_ROTATION_GRACE_SEC: "${URGUARD_ROTATION_GRACE_SEC:-30}"
+      URGUARD_TLS_MODE: "${URGUARD_TLS_MODE:-pqc-mtls}"
+      URGUARD_DATA_DIR: /var/lib/urguard/data
+      URGUARD_RUNTIME_CERT_DIR: /var/lib/urguard/certs
+    ports:
+      - "${URGUARD_NODE_C_PORT:-8083}:8081"
+    volumes:
+      - node-c-data:/var/lib/urguard/data
+      - urguard-certs:/var/lib/urguard/certs:ro
+    depends_on:
+      certs-init:
+        condition: service_completed_successfully
+      controlplane:
+        condition: service_healthy
+    networks:
+      - urguard-net
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck", "http://127.0.0.1:8081/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: deployments/frontend.Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+        VITE_USE_MOCKS: "${VITE_USE_MOCKS:-false}"
+        VITE_ROTATION_GRACE_SEC: "${URGUARD_ROTATION_GRACE_SEC:-30}"
+        VITE_MAX_CLOCK_SKEW_SEC: "${URGUARD_MAX_CLOCK_SKEW_SEC:-30}"
+    env_file:
+      - path: ../.env
+        required: false
+    ports:
+      - "${URGUARD_FRONTEND_PORT:-5173}:80"
+    depends_on:
+      controlplane:
+        condition: service_healthy
+      node-a:
+        condition: service_healthy
+      node-b:
+        condition: service_healthy
+      node-c:
+        condition: service_healthy
+    networks:
+      - urguard-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:80/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+networks:
+  urguard-net:
+    driver: bridge
+
+volumes:
+  urguard-certs:
+  controlplane-data:
+  node-a-data:
+  node-b-data:
+  node-c-data:
