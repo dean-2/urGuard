@@ -1,0 +1,9 @@
+version: v2
+plugins:
+  # Install protoc-gen-go v1.36.6 and protoc-gen-connect-go v1.18.1.
+  - local: protoc-gen-go
+    out: gen
+    opt: paths=source_relative
+  - local: protoc-gen-connect-go
+    out: gen
+    opt: paths=source_relative

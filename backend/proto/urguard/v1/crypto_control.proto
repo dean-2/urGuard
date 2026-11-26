@@ -1,0 +1,185 @@
+syntax = "proto3";
+
+package urguard.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/dean-2/urGuard/backend/gen/urguard/v1;urguardv1";
+
+service AuditWitnessService {
+  rpc GetWitnessHead(GetWitnessHeadRequest) returns (GetWitnessHeadResponse);
+  rpc AcceptWitnessHead(AcceptWitnessHeadRequest) returns (AcceptWitnessHeadResponse);
+}
+
+message GetWitnessHeadRequest {}
+message GetWitnessHeadResponse {
+  bytes signed_head = 1;
+}
+message AcceptWitnessHeadRequest {
+  bytes signed_head = 1;
+  bytes canonical_event = 2;
+}
+message AcceptWitnessHeadResponse {}
+
+service CryptoControlService {
+  rpc EnrollDevice(EnrollDeviceRequest) returns (EnrollDeviceResponse);
+  rpc ReenrollDevice(ReenrollDeviceRequest) returns (ReenrollDeviceResponse);
+  rpc PrepareRotation(PrepareRotationRequest) returns (PrepareRotationResponse);
+  rpc CommitRotation(CommitRotationRequest) returns (CommitRotationResponse);
+  rpc GetEpochState(GetEpochStateRequest) returns (GetEpochStateResponse);
+  rpc RevokeDevice(RevokeDeviceRequest) returns (RevokeDeviceResponse);
+  rpc GetRevocationStatus(GetRevocationStatusRequest) returns (GetRevocationStatusResponse);
+  // Send missed revocations after last_crl_epoch, then live updates and heartbeats.
+  rpc StreamControlUpdates(StreamControlUpdatesRequest) returns (stream StreamControlUpdatesResponse);
+  rpc AckControlUpdate(AckControlUpdateRequest) returns (AckControlUpdateResponse);
+  rpc ExportBackup(ExportBackupRequest) returns (ExportBackupResponse);
+  rpc RestoreBackup(RestoreBackupRequest) returns (RestoreBackupResponse);
+}
+
+enum RotationPhase {
+  ROTATION_PHASE_UNSPECIFIED = 0;
+  ROTATION_PHASE_IDLE = 1;
+  ROTATION_PHASE_PREPARING = 2;
+  ROTATION_PHASE_COMMITTED = 3;
+  ROTATION_PHASE_CUTOFF_ENFORCED = 4;
+}
+
+message DeviceIdentity {
+  string owner_id = 1;
+  string device_id = 2;
+  string key_id = 3;
+  bytes mldsa65_public_key = 4;
+  bytes x25519_public_key = 5;
+  bytes mlkem768_public_key = 6;
+}
+
+message EpochState {
+  uint64 active_epoch = 1;
+  uint64 prepared_epoch = 2;
+  uint64 previous_epoch = 3;
+  RotationPhase phase = 4;
+  google.protobuf.Timestamp committed_at = 5;
+  google.protobuf.Timestamp cutoff_at = 6;
+}
+
+message Revocation {
+  uint64 crl_epoch = 1;
+  string revoked_key_id = 2;
+  string revoked_device_id = 3;
+  google.protobuf.Timestamp issued_at = 4;
+}
+
+message NodeEnforcement {
+  string node_id = 1;
+  google.protobuf.Timestamp enforced_at = 2;
+  google.protobuf.Timestamp acknowledged_at = 3;
+}
+
+message EnrollDeviceRequest {
+  DeviceIdentity device = 1;
+  // Device's ML-DSA signature of the deterministic protobuf encoding of device,
+  // using the urguard/enroll/v1 context. The caller must be an administrator.
+  bytes enrollment_proof = 2;
+}
+
+message EnrollDeviceResponse {
+  DeviceIdentity device = 1;
+}
+
+message ReenrollDeviceRequest {
+  string lost_device_id = 1;
+  DeviceIdentity replacement = 2;
+  // Signature of this deterministic request with recovery_proof cleared, using
+  // urguard/recover/v1 and an active independent device belonging to the owner.
+  bytes recovery_proof = 3;
+  string recovery_device_id = 4;
+}
+
+message ReenrollDeviceResponse {
+  DeviceIdentity device = 1;
+  uint64 resources_rewrapped = 2;
+}
+
+message PrepareRotationRequest {
+  uint64 expected_active_epoch = 1;
+}
+
+message PrepareRotationResponse {
+  EpochState state = 1;
+}
+
+message CommitRotationRequest {
+  uint64 prepared_epoch = 1;
+}
+
+message CommitRotationResponse {
+  EpochState state = 1;
+}
+
+message GetEpochStateRequest {}
+
+message GetEpochStateResponse {
+  EpochState state = 1;
+}
+
+message RevokeDeviceRequest {
+  string device_id = 1;
+  string reason = 2;
+}
+
+message RevokeDeviceResponse {
+  Revocation revocation = 1;
+}
+
+message GetRevocationStatusRequest {
+  uint64 crl_epoch = 1;
+}
+
+message GetRevocationStatusResponse {
+  Revocation revocation = 1;
+  repeated NodeEnforcement nodes = 2;
+  // Elapsed time on the control-plane clock from commit to the last required ack.
+  // Absent until all configured nodes confirm enforcement.
+  optional uint64 revocation_propagation_ms = 3;
+}
+
+message StreamControlUpdatesRequest {
+  string node_id = 1;
+  uint64 last_crl_epoch = 2;
+  uint64 last_key_epoch = 3;
+}
+
+message StreamControlUpdatesResponse {
+  EpochState state = 1;
+  uint64 crl_epoch = 2;
+  repeated Revocation revocations = 3;
+  google.protobuf.Timestamp issued_at = 4;
+  // Signs the update including the epoch state and revocations, excluding this field.
+  bytes authority_signature = 5;
+  // Complete registry snapshot, covered by the authority signature.
+  repeated DeviceIdentity devices = 6;
+}
+
+message AckControlUpdateRequest {
+  string node_id = 1;
+  uint64 crl_epoch = 2;
+  uint64 key_epoch = 3;
+  google.protobuf.Timestamp enforced_at = 4;
+}
+
+message AckControlUpdateResponse {}
+
+message ExportBackupRequest {}
+
+message ExportBackupResponse {
+  bytes bundle = 1;
+}
+
+message RestoreBackupRequest {
+  bytes bundle = 1;
+}
+
+message RestoreBackupResponse {
+  EpochState state = 1;
+  uint64 crl_epoch = 2;
+}

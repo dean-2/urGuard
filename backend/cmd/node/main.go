@@ -9,48 +9,57 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"connectrpc.com/connect"
+	rpc "github.com/dean-2/urGuard/backend/gen/urguard/v1/urguardv1connect"
+	"github.com/dean-2/urGuard/backend/internal/config"
+	"github.com/dean-2/urGuard/backend/internal/node"
+	"github.com/dean-2/urGuard/backend/internal/transport"
 )
 
-func main() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = os.Getenv("URGUARD_NODE_PORT")
+func run(ctx context.Context) error {
+	c, err := config.LoadFromEnv()
+	if err != nil {
+		return err
 	}
-	if port == "" {
-		port = "8081"
+	h, err := transport.New(c, "node:"+c.NodeID)
+	if err != nil {
+		return err
 	}
-	nodeID := os.Getenv("NODE_ID")
-	if nodeID == "" {
-		nodeID = "node"
+	pub, err := os.ReadFile(c.AuthorityPublicFile)
+	if err != nil {
+		return err
 	}
-
-	mux := http.NewServeMux()
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]string{
-			"status":  "ok",
-			"service": nodeID,
-		})
-	})
-
-	srv := &http.Server{
-		Addr:              ":" + port,
-		Handler:           mux,
-		ReadHeaderTimeout: 5 * time.Second,
+	s, err := node.Open(c, pub)
+	if err != nil {
+		return err
 	}
-
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
+	defer s.Close()
+	cp := rpc.NewCryptoControlServiceClient(h.Client, c.ControlPlaneURL, connect.WithGRPC())
+	worker, stop := context.WithCancel(ctx)
+	done := make(chan struct{})
 	go func() {
-		log.Printf("%s listening on :%s", nodeID, port)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("node server error: %v", err)
+		defer close(done)
+		for worker.Err() == nil {
+			if err := s.Sync(worker, cp); err != nil && worker.Err() == nil {
+				log.Printf("control sync: %v", err)
+			}
+			select {
+			case <-worker.Done():
+				return
+			case <-time.After(c.CRLHeartbeat):
+			}
 		}
 	}()
-
-	<-ctx.Done()
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer func() { stop(); <-done }()
+	mux := http.NewServeMux()
+	s.Mount(mux)
+	return h.Serve(ctx, c.NodeAddr, mux)
+}
+func main() {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
-	_ = srv.Shutdown(shutdownCtx)
+	if err := run(ctx); err != nil {
+		log.Fatal(err)
+	}
 }
