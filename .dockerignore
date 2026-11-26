@@ -1,0 +1,31 @@
+# Version control & editor artifacts
+.git
+.gitignore
+.gitattributes
+
+# Local environment & runtime secrets
+.env
+.env.*
+!.env.example
+certs/
+*.pem
+*.key
+*.crt
+
+# Local databases & runtime data
+data/
+*.db
+*.db-wal
+*.db-shm
+*.bolt
+
+# Build outputs, caches & dependencies
+**/node_modules
+**/dist
+**/.vite
+bin/
+coverage/
+*.log
+*.exe
+.DS_Store
+Thumbs.db
