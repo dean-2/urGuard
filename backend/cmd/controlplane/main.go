@@ -7,8 +7,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
+
+	"github.com/urguard/backend/detector"
 )
 
 func main() {
@@ -20,6 +23,15 @@ func main() {
 		port = "8080"
 	}
 
+	skewSec := 30
+	if raw := os.Getenv("URGUARD_MAX_CLOCK_SKEW_SEC"); raw != "" {
+		if parsed, err := strconv.Atoi(raw); err == nil && parsed > 0 {
+			skewSec = parsed
+		}
+	}
+
+	telemetry := detector.NewTelemetryService(time.Duration(skewSec)*time.Second, nil)
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -28,6 +40,7 @@ func main() {
 			"service": "controlplane",
 		})
 	})
+	telemetry.RegisterRoutes(mux)
 
 	srv := &http.Server{
 		Addr:              ":" + port,
@@ -39,7 +52,7 @@ func main() {
 	defer stop()
 
 	go func() {
-		log.Printf("controlplane listening on :%s", port)
+		log.Printf("controlplane listening on :%s (max_clock_skew=%ds)", port, skewSec)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("controlplane server error: %v", err)
 		}
