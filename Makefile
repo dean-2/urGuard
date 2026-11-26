@@ -65,10 +65,12 @@ test: ## Run typecheck, lint, unit tests
 	fi
 
 verify: ## Run verification and clean-machine check scripts
-	@if [ -f "scripts/clean-machine-check.sh" ]; then \
-		bash scripts/clean-machine-check.sh; \
-	else \
-		echo "scripts/clean-machine-check.sh: not implemented yet"; \
+	@if [ "$${URGUARD_IN_CLEAN_CHECK:-0}" != "1" ]; then \
+		if [ -f "scripts/clean-machine-check.sh" ]; then \
+			bash scripts/clean-machine-check.sh; \
+		else \
+			echo "scripts/clean-machine-check.sh: not implemented yet"; \
+		fi; \
 	fi
 	@if [ -f "scripts/verify.sh" ]; then \
 		bash scripts/verify.sh; \
