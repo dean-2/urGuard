@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>urGuard — Track 4 Project Brief</title>
+    <style>
+      @page {
+        size: A4;
+        margin: 10mm;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+        color: #111827;
+        background: #f3f4f6;
+        font-size: 9.2pt;
+        line-height: 1.38;
+      }
+
+      .page {
+        width: 210mm;
+        height: 297mm;
+        padding: 10mm;
+        margin: 8mm auto;
+        background: #ffffff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        page-break-after: always;
+        display: flex;
+        flex-direction: column;
+        gap: 3.5mm;
+      }
+
+      .page:last-child {
+        page-break-after: auto;
+      }
+
+      @media print {
+        body {
+          background: #ffffff;
+        }
+        .page {
+          width: 100%;
+          height: 277mm;
+          padding: 0;
+          margin: 0;
+          box-shadow: none;
+        }
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        border-bottom: 2px solid #1d4ed8;
+        padding-bottom: 2.5mm;
+      }
+
+      .header h1 {
+        margin: 0;
+        font-size: 16pt;
+        color: #0f172a;
+      }
+
+      .header .subtitle {
+        margin: 1mm 0 0;
+        font-size: 9pt;
+        color: #475569;
+      }
+
+      .tag {
+        font-size: 8pt;
+        font-weight: 700;
+        color: #1d4ed8;
+        border: 1px solid #93c5fd;
+        background: #eff6ff;
+        padding: 1mm 2.5mm;
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+
+      h2 {
+        margin: 0 0 1.5mm;
+        font-size: 10.5pt;
+        color: #1e3a8a;
+        border-left: 3px solid #2563eb;
+        padding-left: 2mm;
+      }
+
+      p,
+      ul {
+        margin: 0;
+      }
+
+      ul {
+        padding-left: 4.5mm;
+      }
+
+      li {
+        margin-bottom: 0.9mm;
+      }
+
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1.25fr;
+        gap: 3.5mm;
+      }
+
+      .box {
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        padding: 2.5mm 3mm;
+        background: #f8fafc;
+      }
+
+      .arch-wrap {
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        padding: 2mm;
+        background: #ffffff;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 8.4pt;
+      }
+
+      th,
+      td {
+        border: 1px solid #cbd5e1;
+        padding: 1.4mm 2mm;
+        text-align: left;
+      }
+
+      th {
+        background: #eff6ff;
+        color: #1e3a8a;
+        font-weight: 700;
+      }
+
+      .todo {
+        color: #b45309;
+        font-weight: 700;
+        background: #fef3c7;
+        padding: 0.3mm 1mm;
+        border-radius: 2px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 8pt;
+      }
+
+      .video-box {
+        margin-top: auto;
+        border: 1.5px solid #1d4ed8;
+        background: #eff6ff;
+        border-radius: 4px;
+        padding: 2.5mm 3.5mm;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 3mm;
+      }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 8.2pt;
+        background: #e2e8f0;
+        padding: 0.2mm 1mm;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- PAGE 1: Problem, USP, Architecture & Metrics -->
+    <section class="page" aria-label="Page 1: Overview, Architecture and Metrics">
+      <div class="header">
+        <div>
+          <h1>urGuard</h1>
+          <p class="subtitle">
+            Post-Quantum Zero-Trust Messaging, Crash-Safe Key Governance &amp; Explainable Access
+            Guard
+          </p>
+        </div>
+        <span class="tag">Track 4 · Zero AI/ML · Vetted PQC</span>
+      </div>
+
+      <div class="two-col">
+        <div class="box">
+          <h2>Problem Statement</h2>
+          <p>
+            Classical encryption fails against harvest-now, decrypt-later quantum adversaries, while
+            distributed key rotation and device revocation often break active transfers or silently
+            desynchronize across nodes. Meanwhile, black-box anomaly detectors cannot explain why an
+            alert fired or handle skewed clocks across microservices.
+          </p>
+        </div>
+
+        <div class="box">
+          <h2>Unique Selling Proposition (USP)</h2>
+          <ul>
+            <li>
+              <strong>Hybrid PQC E2E + Transport:</strong> <code>X25519MLKEM768</code> TLS paired
+              with per-message <code>X25519 + ML-KEM-768</code>, <code>HKDF-SHA256</code>,
+              <code>AES-256-GCM</code> AAD binding, and <code>ML-DSA-65</code> signatures.
+            </li>
+            <li>
+              <strong>Crash-Safe Multi-Node Governance:</strong> Atomic WAL two-phase rotation
+              (30s grace), streaming CRL propagation, signed backups, and canonical SHA-256 audit
+              logs.
+            </li>
+            <li>
+              <strong>Explainable Zero-AI Detection:</strong> Deterministic rules, EWMA baselines,
+              ±30s watermark clock-skew buffer, and identity→service lateral-movement graph.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="arch-wrap">
+        <h2>System Architecture</h2>
+        <svg
+          viewBox="0 0 760 198"
+          width="100%"
+          height="148"
+          role="img"
+          aria-label="urGuard System Architecture Diagram"
+        >
+          <rect x="130" y="6" width="500" height="36" rx="6" fill="#eff6ff" stroke="#2563eb" />
+          <text x="380" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="#1e3a8a">
+            React + TypeScript Operator Console (Vite / Nginx :5173)
+          </text>
+          <text x="380" y="35" text-anchor="middle" font-size="9" fill="#475569">
+            Messaging &amp; Chunks · Key Governance &amp; Backups · Audit Verifier · React Flow Graph
+          </text>
+
+          <line x1="380" y1="42" x2="380" y2="62" stroke="#1e293b" stroke-width="1.5" />
+          <polygon points="376,58 384,58 380,64" fill="#1e293b" />
+          <text x="390" y="56" font-size="8.5" fill="#334155">ConnectRPC / gRPC-Web (/api/)</text>
+
+          <rect x="65" y="64" width="630" height="62" rx="6" fill="#f8fafc" stroke="#334155" />
+          <text x="380" y="79" text-anchor="middle" font-size="10.5" font-weight="700" fill="#0f172a">
+            Control Plane &amp; Explainable Detection Engine (Go 1.24, Distroless Non-Root :8080)
+          </text>
+          <rect x="80" y="86" width="185" height="32" rx="4" fill="#ffffff" stroke="#94a3b8" />
+          <text x="172" y="100" text-anchor="middle" font-size="9" font-weight="700">
+            Key Authority &amp; WAL
+          </text>
+          <text x="172" y="112" text-anchor="middle" font-size="8" fill="#475569">
+            2-Phase Rotation · CRL · Backups
+          </text>
+
+          <rect x="285" y="86" width="190" height="32" rx="4" fill="#ffffff" stroke="#94a3b8" />
+          <text x="380" y="100" text-anchor="middle" font-size="9" font-weight="700">
+            Canonical Audit Log
+          </text>
+          <text x="380" y="112" text-anchor="middle" font-size="8" fill="#475569">
+            SHA-256 Chain · ML-DSA-65 Checkpoints
+          </text>
+
+          <rect x="495" y="86" width="185" height="32" rx="4" fill="#ffffff" stroke="#94a3b8" />
+          <text x="587" y="100" text-anchor="middle" font-size="9" font-weight="700">
+            Explainable Detector
+          </text>
+          <text x="587" y="112" text-anchor="middle" font-size="8" fill="#475569">
+            ±30s Watermark · Access Graph
+          </text>
+
+          <line x1="230" y1="126" x2="155" y2="150" stroke="#1e293b" stroke-width="1.5" />
+          <line x1="380" y1="126" x2="380" y2="150" stroke="#1e293b" stroke-width="1.5" />
+          <line x1="530" y1="126" x2="605" y2="150" stroke="#1e293b" stroke-width="1.5" />
+          <text x="380" y="142" text-anchor="middle" font-size="8.5" fill="#1d4ed8">
+            gRPC Server-Streaming + Runtime mTLS (X25519MLKEM768)
+          </text>
+
+          <rect x="55" y="152" width="200" height="38" rx="5" fill="#f1f5f9" stroke="#475569" />
+          <text x="155" y="169" text-anchor="middle" font-size="9.5" font-weight="700">
+            Relay Node A (:8081)
+          </text>
+          <text x="155" y="182" text-anchor="middle" font-size="8" fill="#475569">
+            Local Epoch/CRL DB · Chunk MAC
+          </text>
+
+          <rect x="280" y="152" width="200" height="38" rx="5" fill="#f1f5f9" stroke="#475569" />
+          <text x="380" y="169" text-anchor="middle" font-size="9.5" font-weight="700">
+            Relay Node B (:8082)
+          </text>
+          <text x="380" y="182" text-anchor="middle" font-size="8" fill="#475569">
+            Replay Window · Resumption Gate
+          </text>
+
+          <rect x="505" y="152" width="200" height="38" rx="5" fill="#f1f5f9" stroke="#475569" />
+          <text x="605" y="169" text-anchor="middle" font-size="9.5" font-weight="700">
+            Relay Node C (:8083)
+          </text>
+          <text x="605" y="182" text-anchor="middle" font-size="8" fill="#475569">
+            Epoch Cutoff · E2E Envelope Relay
+          </text>
+        </svg>
+      </div>
+
+      <div>
+        <h2>Evaluation &amp; Performance Benchmarks</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>PRD Target</th>
+              <th>Measured Result (from eval / bench output)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Detection F1 Score (Precision / Recall)</td>
+              <td>High F1 on Track-4-Toolkit logs</td>
+              <td>
+                <span class="todo">[TODO: fill F1 / Precision / Recall from eval output]</span>
+              </td>
+            </tr>
+            <tr>
+              <td>Median Time to Alert (ms)</td>
+              <td>Sub-second detection latency</td>
+              <td><span class="todo">[TODO: fill median_time_to_alert_ms from eval output]</span></td>
+            </tr>
+            <tr>
+              <td>False Alerts per 1,000 Benign Events</td>
+              <td>Minimal false positives on admin tasks</td>
+              <td>
+                <span class="todo">[TODO: fill false_alerts_per_1k_benign from eval output]</span>
+              </td>
+            </tr>
+            <tr>
+              <td>Revocation Propagation (3 Nodes)</td>
+              <td>&lt; 500 ms across local nodes</td>
+              <td>
+                <span class="todo">[TODO: fill revocation_propagation_ms from bench/verify]</span>
+              </td>
+            </tr>
+            <tr>
+              <td>PQC Handshake / Encapsulation Latency</td>
+              <td>&lt; 15 ms</td>
+              <td><span class="todo">[TODO: fill pqc_handshake_latency_ms from make bench]</span></td>
+            </tr>
+            <tr>
+              <td>E2E Throughput Overhead</td>
+              <td>&lt; 15% overhead vs. baseline</td>
+              <td><span class="todo">[TODO: fill e2e_throughput_overhead_pct from make bench]</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PAGE 2: 1-Page Threat Model + Demo Video Link -->
+    <section class="page" aria-label="Page 2: Threat Model and Demo Video Link">
+      <div class="header">
+        <div>
+          <h1>urGuard Threat Model &amp; Verification Scope</h1>
+          <p class="subtitle">
+            Assets, Adversaries, Trust Boundaries, Assumptions &amp; Explicit Non-Goals
+          </p>
+        </div>
+        <span class="tag">Page 2 of 2</span>
+      </div>
+
+      <div class="box">
+        <h2>1. Protected Assets</h2>
+        <ul>
+          <li>
+            <strong>Long-Term Identity Keys (<code>IK_sig</code>):</strong> <code>ML-DSA-65</code>
+            signing keypairs bound to user, service, and device identities.
+          </li>
+          <li>
+            <strong>Epoch &amp; Ephemeral Session Keys (<code>EK_epoch</code>, <code>SK_ephem</code>):</strong>
+            Hybrid <code>X25519 + ML-KEM-768</code> keys; <code>SK_ephem</code> zeroized after
+            session derivation/completion.
+          </li>
+          <li>
+            <strong>Shared DEKs &amp; Encrypted Backups:</strong> Collaborator Data Encryption Keys
+            re-encapsulated on device loss; <code>Argon2id + HKDF</code> /
+            <code>AES-256-GCM</code> key bundles signed with <code>ML-DSA-65</code>.
+          </li>
+          <li>
+            <strong>Tamper-Evident Audit Log &amp; Access Graph:</strong> Canonical JSON records
+            chained via <code>SHA256(seq || prev_hash || canonical_body)</code> with signed
+            checkpoints.
+          </li>
+        </ul>
+      </div>
+
+      <div class="box">
+        <h2>2. Adversary Capabilities</h2>
+        <ul>
+          <li>
+            <strong>Harvest-Now, Decrypt-Later Quantum Adversary:</strong> Captures ciphertexts
+            today and breaks classical KEMs or compromises post-session <code>IK_sig</code> /
+            retired <code>EK_epoch</code>.
+          </li>
+          <li>
+            <strong>Active Network Attacker (MitM):</strong> Replays envelopes, modifies
+            <code>recipient_id</code> or <code>key_epoch</code>, drops/reorders chunks, or hijacks
+            <code>ResumptionTicket</code> tokens.
+          </li>
+          <li>
+            <strong>Compromised Device / Insider Pivot:</strong> Stolen enrolled device
+            (<code>device_old</code>) or valid credentials traversing unseen service hops
+            (<code>edge-gateway → dev-service → secrets-vault</code>).
+          </li>
+          <li>
+            <strong>Injection &amp; Storage Tamper Attacker:</strong> Submits newline/JSON injection
+            payloads or alters historical audit rows / backup ciphertext bytes.
+          </li>
+        </ul>
+      </div>
+
+      <div class="box">
+        <h2>3. Trust Boundaries</h2>
+        <ul>
+          <li>
+            <strong>Console ↔ Control Plane:</strong> Nginx <code>/api/</code> proxy + ConnectRPC; UI
+            renders untrusted metadata strictly as plain text (no <code>dangerouslySetInnerHTML</code>).
+          </li>
+          <li>
+            <strong>Control Plane ↔ Relay Nodes:</strong> Mutual-authenticated
+            <code>X25519MLKEM768</code> TLS with runtime-generated ephemeral mTLS CA/leaf certs
+            (never committed).
+          </li>
+          <li>
+            <strong>E2E Envelope vs. Transport:</strong> Application <code>AES-256-GCM</code> AAD
+            binding + <code>ML-DSA-65</code> signatures hold even if transport terminates at relays.
+          </li>
+          <li>
+            <strong>Untrusted Input ↔ Canonical Audit Core:</strong> User-supplied text stays isolated
+            in escaped <code>payload.metadata</code>; WAL commits precede streaming acknowledgements.
+          </li>
+        </ul>
+      </div>
+
+      <div class="two-col">
+        <div class="box">
+          <h2>4. Security Assumptions</h2>
+          <ul>
+            <li>Host RAM &amp; OS CSPRNG are trusted before <code>SK_ephem</code> zeroization.</li>
+            <li>
+              Clocks remain within <code>±30s</code> default (<code>±60s</code> max tested); pairs
+              inside <code>2 * skew</code> flag <code>order_uncertain: true</code>.
+            </li>
+            <li>
+              Standardized Go <code>crypto/mlkem</code>, <code>cloudflare/circl</code>, and atomic
+              WAL <code>fsync</code>.
+            </li>
+          </ul>
+        </div>
+
+        <div class="box">
+          <h2>5. Explicit Limits &amp; Non-Goals</h2>
+          <ul>
+            <li>Active host RAM dumps / cold-boot attacks during live sessions are out of scope.</li>
+            <li>Clock drift exceeding <code>±60s</code> degrades causal ordering guarantees.</li>
+            <li>Volumetric DoS and hardware side channels outside stdlib/<code>circl</code>.</li>
+            <li>Trojanized client binaries or compromised initial root bootstrap.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="video-box">
+        <div>
+          <strong>5-Minute Demo Video &amp; Repository</strong><br />
+          <span>Scripted walkthrough of all 12 Track 4 objectives:</span>
+          <span class="todo">[TODO: DEMO_VIDEO_LINK]</span>
+        </div>
+        <div>
+          <strong>GitHub Repo:</strong>
+          <span class="todo">[TODO: REPO_URL]</span>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>
