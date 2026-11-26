@@ -13,6 +13,7 @@ import (
 	"math"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -39,7 +40,12 @@ var (
 	ErrConflict = errors.New("store state conflict")
 )
 
-type Store struct{ db *bolt.DB }
+type Store struct {
+	db *bolt.DB
+	// OpenAuditLog reads the authority and opens its log in separate transactions.
+	// A fresh-store restore can replace the authority between those operations.
+	authorityMu sync.Mutex
+}
 type EpochState struct {
 	Active, Prepared, Previous uint64
 	CommittedAt, CutoffAt      time.Time
@@ -84,7 +90,7 @@ func Open(path string) (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := &Store{db}
+	s := &Store{db: db}
 	err = db.Update(func(tx *bolt.Tx) error {
 		if bucket(tx, meta) != nil {
 			for _, name := range buckets {

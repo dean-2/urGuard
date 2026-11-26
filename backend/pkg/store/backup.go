@@ -132,7 +132,8 @@ func (s *Store) RestoreBackup(bundle, passphrase []byte) error {
 
 // RestoreIntoFreshStore supports disaster recovery on a new database. Supply
 // the authority public key saved independently before the loss. A fresh DB has
-// no independent record of the most recent revision.
+// no independent record of the most recent revision. Perform recovery before
+// opening an audit log under the new database's temporary authority.
 func (s *Store) RestoreIntoFreshStore(bundle, passphrase, trustedPublic []byte) error {
 	return s.restore(bundle, passphrase, trustedPublic, true)
 }
@@ -168,6 +169,10 @@ func (s *Store) restore(bundle, passphrase, pub []byte, fresh bool) error {
 		return ErrBackupCorrupted
 	}
 	// Validate against live state inside the writer transaction, after the KDF.
+	if fresh {
+		s.authorityMu.Lock()
+		defer s.authorityMu.Unlock()
+	}
 	return s.db.Update(func(tx *bolt.Tx) error {
 		revision := bucket(tx, meta).Sequence()
 		local, err := authority(tx)
@@ -175,7 +180,9 @@ func (s *Store) restore(bundle, passphrase, pub []byte, fresh bool) error {
 			return err
 		}
 		if fresh {
-			if revision != 0 {
+			// An initialized audit log, including an open, empty log, holds a
+			// signer bound to the local authority. Preserve that binding.
+			if revision != 0 || (bucket(tx, "audit_meta") != nil && !bytes.Equal(local.PublicBytes(), pub)) {
 				return ErrConflict
 			}
 		} else if !bytes.Equal(local.PublicBytes(), pub) || revision > h.Revision {

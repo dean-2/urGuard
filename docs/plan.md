@@ -44,6 +44,8 @@ Owns the foundational security primitives, distributed key lifecycle, persistenc
 4. **Tamper-Evident Audit Log:**
    * Canonical structured encoding (injection-proof against crafted user strings/newlines), SHA-256 hash chain, periodic `ML-DSA-65` signed checkpoints, and `VerifyChain()` diagnostic API.
 5. **Control Plane & Multi-Node Relay:**
+   * Module 5 adds an audit witness on a relay with independent persistent storage. Pin the authority public key during explicit enrollment. On restart, fetch the relay's latest checkpoint over authenticated transport and call `OpenWitnessedAuditLog` before serving writes. Missing witness state or an unreachable enrolled witness blocks startup. Bootstrap must be explicit.
+   * Send every committed event and its signed head in order. The relay verifies the signature using the pinned key, checks the next sequence and previous hash, and recomputes the event hash before atomically persisting the head. An identical retry returns the existing acknowledgement. Reject regressions, conflicting hashes, and gaps. Return success to the original caller only after durable relay acknowledgement. Use a durable queue and idempotent request IDs to resume pending submissions after a crash.
    * Rotation coordinator with documented 30s grace period and strict post-cutoff epoch rejection (`ERR_KEY_EPOCH_EXPIRED`).
    * gRPC Server-Streaming CRL pusher + 1s heartbeat reconciliation, measuring `revocation_propagation_ms` across all nodes.
    * Device-loss re-enrollment + DEK re-encapsulation so other authorized users retain access.
