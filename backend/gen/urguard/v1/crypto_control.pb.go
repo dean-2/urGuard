@@ -77,6 +77,174 @@ func (RotationPhase) EnumDescriptor() ([]byte, []int) {
 	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{0}
 }
 
+type GetWitnessHeadRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetWitnessHeadRequest) Reset() {
+	*x = GetWitnessHeadRequest{}
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetWitnessHeadRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetWitnessHeadRequest) ProtoMessage() {}
+
+func (x *GetWitnessHeadRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetWitnessHeadRequest.ProtoReflect.Descriptor instead.
+func (*GetWitnessHeadRequest) Descriptor() ([]byte, []int) {
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{0}
+}
+
+type GetWitnessHeadResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SignedHead    []byte                 `protobuf:"bytes,1,opt,name=signed_head,json=signedHead,proto3" json:"signed_head,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetWitnessHeadResponse) Reset() {
+	*x = GetWitnessHeadResponse{}
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetWitnessHeadResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetWitnessHeadResponse) ProtoMessage() {}
+
+func (x *GetWitnessHeadResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetWitnessHeadResponse.ProtoReflect.Descriptor instead.
+func (*GetWitnessHeadResponse) Descriptor() ([]byte, []int) {
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *GetWitnessHeadResponse) GetSignedHead() []byte {
+	if x != nil {
+		return x.SignedHead
+	}
+	return nil
+}
+
+type AcceptWitnessHeadRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	SignedHead     []byte                 `protobuf:"bytes,1,opt,name=signed_head,json=signedHead,proto3" json:"signed_head,omitempty"`
+	CanonicalEvent []byte                 `protobuf:"bytes,2,opt,name=canonical_event,json=canonicalEvent,proto3" json:"canonical_event,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *AcceptWitnessHeadRequest) Reset() {
+	*x = AcceptWitnessHeadRequest{}
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AcceptWitnessHeadRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AcceptWitnessHeadRequest) ProtoMessage() {}
+
+func (x *AcceptWitnessHeadRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AcceptWitnessHeadRequest.ProtoReflect.Descriptor instead.
+func (*AcceptWitnessHeadRequest) Descriptor() ([]byte, []int) {
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *AcceptWitnessHeadRequest) GetSignedHead() []byte {
+	if x != nil {
+		return x.SignedHead
+	}
+	return nil
+}
+
+func (x *AcceptWitnessHeadRequest) GetCanonicalEvent() []byte {
+	if x != nil {
+		return x.CanonicalEvent
+	}
+	return nil
+}
+
+type AcceptWitnessHeadResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AcceptWitnessHeadResponse) Reset() {
+	*x = AcceptWitnessHeadResponse{}
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AcceptWitnessHeadResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AcceptWitnessHeadResponse) ProtoMessage() {}
+
+func (x *AcceptWitnessHeadResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AcceptWitnessHeadResponse.ProtoReflect.Descriptor instead.
+func (*AcceptWitnessHeadResponse) Descriptor() ([]byte, []int) {
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{3}
+}
+
 type DeviceIdentity struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	OwnerId           string                 `protobuf:"bytes,1,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
@@ -91,7 +259,7 @@ type DeviceIdentity struct {
 
 func (x *DeviceIdentity) Reset() {
 	*x = DeviceIdentity{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[0]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -103,7 +271,7 @@ func (x *DeviceIdentity) String() string {
 func (*DeviceIdentity) ProtoMessage() {}
 
 func (x *DeviceIdentity) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[0]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -116,7 +284,7 @@ func (x *DeviceIdentity) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceIdentity.ProtoReflect.Descriptor instead.
 func (*DeviceIdentity) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{0}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *DeviceIdentity) GetOwnerId() string {
@@ -175,7 +343,7 @@ type EpochState struct {
 
 func (x *EpochState) Reset() {
 	*x = EpochState{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[1]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -187,7 +355,7 @@ func (x *EpochState) String() string {
 func (*EpochState) ProtoMessage() {}
 
 func (x *EpochState) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[1]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -200,7 +368,7 @@ func (x *EpochState) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EpochState.ProtoReflect.Descriptor instead.
 func (*EpochState) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{1}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *EpochState) GetActiveEpoch() uint64 {
@@ -257,7 +425,7 @@ type Revocation struct {
 
 func (x *Revocation) Reset() {
 	*x = Revocation{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[2]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -269,7 +437,7 @@ func (x *Revocation) String() string {
 func (*Revocation) ProtoMessage() {}
 
 func (x *Revocation) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[2]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -282,7 +450,7 @@ func (x *Revocation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Revocation.ProtoReflect.Descriptor instead.
 func (*Revocation) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{2}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Revocation) GetCrlEpoch() uint64 {
@@ -324,7 +492,7 @@ type NodeEnforcement struct {
 
 func (x *NodeEnforcement) Reset() {
 	*x = NodeEnforcement{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[3]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -336,7 +504,7 @@ func (x *NodeEnforcement) String() string {
 func (*NodeEnforcement) ProtoMessage() {}
 
 func (x *NodeEnforcement) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[3]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -349,7 +517,7 @@ func (x *NodeEnforcement) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NodeEnforcement.ProtoReflect.Descriptor instead.
 func (*NodeEnforcement) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{3}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *NodeEnforcement) GetNodeId() string {
@@ -374,16 +542,18 @@ func (x *NodeEnforcement) GetAcknowledgedAt() *timestamppb.Timestamp {
 }
 
 type EnrollDeviceRequest struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	Device          *DeviceIdentity        `protobuf:"bytes,1,opt,name=device,proto3" json:"device,omitempty"`
-	EnrollmentProof []byte                 `protobuf:"bytes,2,opt,name=enrollment_proof,json=enrollmentProof,proto3" json:"enrollment_proof,omitempty"`
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Device *DeviceIdentity        `protobuf:"bytes,1,opt,name=device,proto3" json:"device,omitempty"`
+	// Device's ML-DSA signature of the deterministic protobuf encoding of device,
+	// using the urguard/enroll/v1 context. The caller must be an administrator.
+	EnrollmentProof []byte `protobuf:"bytes,2,opt,name=enrollment_proof,json=enrollmentProof,proto3" json:"enrollment_proof,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
 
 func (x *EnrollDeviceRequest) Reset() {
 	*x = EnrollDeviceRequest{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[4]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -395,7 +565,7 @@ func (x *EnrollDeviceRequest) String() string {
 func (*EnrollDeviceRequest) ProtoMessage() {}
 
 func (x *EnrollDeviceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[4]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -408,7 +578,7 @@ func (x *EnrollDeviceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnrollDeviceRequest.ProtoReflect.Descriptor instead.
 func (*EnrollDeviceRequest) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{4}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *EnrollDeviceRequest) GetDevice() *DeviceIdentity {
@@ -434,7 +604,7 @@ type EnrollDeviceResponse struct {
 
 func (x *EnrollDeviceResponse) Reset() {
 	*x = EnrollDeviceResponse{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[5]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -446,7 +616,7 @@ func (x *EnrollDeviceResponse) String() string {
 func (*EnrollDeviceResponse) ProtoMessage() {}
 
 func (x *EnrollDeviceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[5]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -459,7 +629,7 @@ func (x *EnrollDeviceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnrollDeviceResponse.ProtoReflect.Descriptor instead.
 func (*EnrollDeviceResponse) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{5}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *EnrollDeviceResponse) GetDevice() *DeviceIdentity {
@@ -470,17 +640,20 @@ func (x *EnrollDeviceResponse) GetDevice() *DeviceIdentity {
 }
 
 type ReenrollDeviceRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	LostDeviceId  string                 `protobuf:"bytes,1,opt,name=lost_device_id,json=lostDeviceId,proto3" json:"lost_device_id,omitempty"`
-	Replacement   *DeviceIdentity        `protobuf:"bytes,2,opt,name=replacement,proto3" json:"replacement,omitempty"`
-	RecoveryProof []byte                 `protobuf:"bytes,3,opt,name=recovery_proof,json=recoveryProof,proto3" json:"recovery_proof,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	LostDeviceId string                 `protobuf:"bytes,1,opt,name=lost_device_id,json=lostDeviceId,proto3" json:"lost_device_id,omitempty"`
+	Replacement  *DeviceIdentity        `protobuf:"bytes,2,opt,name=replacement,proto3" json:"replacement,omitempty"`
+	// Signature of this deterministic request with recovery_proof cleared, using
+	// urguard/recover/v1 and an active independent device belonging to the owner.
+	RecoveryProof    []byte `protobuf:"bytes,3,opt,name=recovery_proof,json=recoveryProof,proto3" json:"recovery_proof,omitempty"`
+	RecoveryDeviceId string `protobuf:"bytes,4,opt,name=recovery_device_id,json=recoveryDeviceId,proto3" json:"recovery_device_id,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *ReenrollDeviceRequest) Reset() {
 	*x = ReenrollDeviceRequest{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[6]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -492,7 +665,7 @@ func (x *ReenrollDeviceRequest) String() string {
 func (*ReenrollDeviceRequest) ProtoMessage() {}
 
 func (x *ReenrollDeviceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[6]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -505,7 +678,7 @@ func (x *ReenrollDeviceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReenrollDeviceRequest.ProtoReflect.Descriptor instead.
 func (*ReenrollDeviceRequest) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{6}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ReenrollDeviceRequest) GetLostDeviceId() string {
@@ -529,6 +702,13 @@ func (x *ReenrollDeviceRequest) GetRecoveryProof() []byte {
 	return nil
 }
 
+func (x *ReenrollDeviceRequest) GetRecoveryDeviceId() string {
+	if x != nil {
+		return x.RecoveryDeviceId
+	}
+	return ""
+}
+
 type ReenrollDeviceResponse struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
 	Device             *DeviceIdentity        `protobuf:"bytes,1,opt,name=device,proto3" json:"device,omitempty"`
@@ -539,7 +719,7 @@ type ReenrollDeviceResponse struct {
 
 func (x *ReenrollDeviceResponse) Reset() {
 	*x = ReenrollDeviceResponse{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[7]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -551,7 +731,7 @@ func (x *ReenrollDeviceResponse) String() string {
 func (*ReenrollDeviceResponse) ProtoMessage() {}
 
 func (x *ReenrollDeviceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[7]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -564,7 +744,7 @@ func (x *ReenrollDeviceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReenrollDeviceResponse.ProtoReflect.Descriptor instead.
 func (*ReenrollDeviceResponse) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{7}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ReenrollDeviceResponse) GetDevice() *DeviceIdentity {
@@ -590,7 +770,7 @@ type PrepareRotationRequest struct {
 
 func (x *PrepareRotationRequest) Reset() {
 	*x = PrepareRotationRequest{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[8]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -602,7 +782,7 @@ func (x *PrepareRotationRequest) String() string {
 func (*PrepareRotationRequest) ProtoMessage() {}
 
 func (x *PrepareRotationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[8]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -615,7 +795,7 @@ func (x *PrepareRotationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PrepareRotationRequest.ProtoReflect.Descriptor instead.
 func (*PrepareRotationRequest) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{8}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *PrepareRotationRequest) GetExpectedActiveEpoch() uint64 {
@@ -634,7 +814,7 @@ type PrepareRotationResponse struct {
 
 func (x *PrepareRotationResponse) Reset() {
 	*x = PrepareRotationResponse{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[9]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -646,7 +826,7 @@ func (x *PrepareRotationResponse) String() string {
 func (*PrepareRotationResponse) ProtoMessage() {}
 
 func (x *PrepareRotationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[9]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -659,7 +839,7 @@ func (x *PrepareRotationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PrepareRotationResponse.ProtoReflect.Descriptor instead.
 func (*PrepareRotationResponse) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{9}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *PrepareRotationResponse) GetState() *EpochState {
@@ -678,7 +858,7 @@ type CommitRotationRequest struct {
 
 func (x *CommitRotationRequest) Reset() {
 	*x = CommitRotationRequest{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[10]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -690,7 +870,7 @@ func (x *CommitRotationRequest) String() string {
 func (*CommitRotationRequest) ProtoMessage() {}
 
 func (x *CommitRotationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[10]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -703,7 +883,7 @@ func (x *CommitRotationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommitRotationRequest.ProtoReflect.Descriptor instead.
 func (*CommitRotationRequest) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{10}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *CommitRotationRequest) GetPreparedEpoch() uint64 {
@@ -722,7 +902,7 @@ type CommitRotationResponse struct {
 
 func (x *CommitRotationResponse) Reset() {
 	*x = CommitRotationResponse{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[11]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -734,7 +914,7 @@ func (x *CommitRotationResponse) String() string {
 func (*CommitRotationResponse) ProtoMessage() {}
 
 func (x *CommitRotationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[11]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -747,7 +927,7 @@ func (x *CommitRotationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommitRotationResponse.ProtoReflect.Descriptor instead.
 func (*CommitRotationResponse) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{11}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *CommitRotationResponse) GetState() *EpochState {
@@ -765,7 +945,7 @@ type GetEpochStateRequest struct {
 
 func (x *GetEpochStateRequest) Reset() {
 	*x = GetEpochStateRequest{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[12]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -777,7 +957,7 @@ func (x *GetEpochStateRequest) String() string {
 func (*GetEpochStateRequest) ProtoMessage() {}
 
 func (x *GetEpochStateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[12]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -790,7 +970,7 @@ func (x *GetEpochStateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEpochStateRequest.ProtoReflect.Descriptor instead.
 func (*GetEpochStateRequest) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{12}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{16}
 }
 
 type GetEpochStateResponse struct {
@@ -802,7 +982,7 @@ type GetEpochStateResponse struct {
 
 func (x *GetEpochStateResponse) Reset() {
 	*x = GetEpochStateResponse{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[13]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -814,7 +994,7 @@ func (x *GetEpochStateResponse) String() string {
 func (*GetEpochStateResponse) ProtoMessage() {}
 
 func (x *GetEpochStateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[13]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -827,7 +1007,7 @@ func (x *GetEpochStateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEpochStateResponse.ProtoReflect.Descriptor instead.
 func (*GetEpochStateResponse) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{13}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *GetEpochStateResponse) GetState() *EpochState {
@@ -847,7 +1027,7 @@ type RevokeDeviceRequest struct {
 
 func (x *RevokeDeviceRequest) Reset() {
 	*x = RevokeDeviceRequest{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[14]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -859,7 +1039,7 @@ func (x *RevokeDeviceRequest) String() string {
 func (*RevokeDeviceRequest) ProtoMessage() {}
 
 func (x *RevokeDeviceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[14]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -872,7 +1052,7 @@ func (x *RevokeDeviceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeDeviceRequest.ProtoReflect.Descriptor instead.
 func (*RevokeDeviceRequest) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{14}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *RevokeDeviceRequest) GetDeviceId() string {
@@ -898,7 +1078,7 @@ type RevokeDeviceResponse struct {
 
 func (x *RevokeDeviceResponse) Reset() {
 	*x = RevokeDeviceResponse{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[15]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -910,7 +1090,7 @@ func (x *RevokeDeviceResponse) String() string {
 func (*RevokeDeviceResponse) ProtoMessage() {}
 
 func (x *RevokeDeviceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[15]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -923,7 +1103,7 @@ func (x *RevokeDeviceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeDeviceResponse.ProtoReflect.Descriptor instead.
 func (*RevokeDeviceResponse) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{15}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *RevokeDeviceResponse) GetRevocation() *Revocation {
@@ -942,7 +1122,7 @@ type GetRevocationStatusRequest struct {
 
 func (x *GetRevocationStatusRequest) Reset() {
 	*x = GetRevocationStatusRequest{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[16]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -954,7 +1134,7 @@ func (x *GetRevocationStatusRequest) String() string {
 func (*GetRevocationStatusRequest) ProtoMessage() {}
 
 func (x *GetRevocationStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[16]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -967,7 +1147,7 @@ func (x *GetRevocationStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRevocationStatusRequest.ProtoReflect.Descriptor instead.
 func (*GetRevocationStatusRequest) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{16}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *GetRevocationStatusRequest) GetCrlEpoch() uint64 {
@@ -990,7 +1170,7 @@ type GetRevocationStatusResponse struct {
 
 func (x *GetRevocationStatusResponse) Reset() {
 	*x = GetRevocationStatusResponse{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[17]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1002,7 +1182,7 @@ func (x *GetRevocationStatusResponse) String() string {
 func (*GetRevocationStatusResponse) ProtoMessage() {}
 
 func (x *GetRevocationStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[17]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1015,7 +1195,7 @@ func (x *GetRevocationStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRevocationStatusResponse.ProtoReflect.Descriptor instead.
 func (*GetRevocationStatusResponse) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{17}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *GetRevocationStatusResponse) GetRevocation() *Revocation {
@@ -1050,7 +1230,7 @@ type StreamControlUpdatesRequest struct {
 
 func (x *StreamControlUpdatesRequest) Reset() {
 	*x = StreamControlUpdatesRequest{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[18]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1062,7 +1242,7 @@ func (x *StreamControlUpdatesRequest) String() string {
 func (*StreamControlUpdatesRequest) ProtoMessage() {}
 
 func (x *StreamControlUpdatesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[18]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1075,7 +1255,7 @@ func (x *StreamControlUpdatesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StreamControlUpdatesRequest.ProtoReflect.Descriptor instead.
 func (*StreamControlUpdatesRequest) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{18}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *StreamControlUpdatesRequest) GetNodeId() string {
@@ -1107,13 +1287,15 @@ type StreamControlUpdatesResponse struct {
 	IssuedAt    *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=issued_at,json=issuedAt,proto3" json:"issued_at,omitempty"`
 	// Signs the update including the epoch state and revocations, excluding this field.
 	AuthoritySignature []byte `protobuf:"bytes,5,opt,name=authority_signature,json=authoritySignature,proto3" json:"authority_signature,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	// Complete registry snapshot, covered by the authority signature.
+	Devices       []*DeviceIdentity `protobuf:"bytes,6,rep,name=devices,proto3" json:"devices,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *StreamControlUpdatesResponse) Reset() {
 	*x = StreamControlUpdatesResponse{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[19]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1125,7 +1307,7 @@ func (x *StreamControlUpdatesResponse) String() string {
 func (*StreamControlUpdatesResponse) ProtoMessage() {}
 
 func (x *StreamControlUpdatesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[19]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1138,7 +1320,7 @@ func (x *StreamControlUpdatesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StreamControlUpdatesResponse.ProtoReflect.Descriptor instead.
 func (*StreamControlUpdatesResponse) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{19}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *StreamControlUpdatesResponse) GetState() *EpochState {
@@ -1176,6 +1358,13 @@ func (x *StreamControlUpdatesResponse) GetAuthoritySignature() []byte {
 	return nil
 }
 
+func (x *StreamControlUpdatesResponse) GetDevices() []*DeviceIdentity {
+	if x != nil {
+		return x.Devices
+	}
+	return nil
+}
+
 type AckControlUpdateRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
@@ -1188,7 +1377,7 @@ type AckControlUpdateRequest struct {
 
 func (x *AckControlUpdateRequest) Reset() {
 	*x = AckControlUpdateRequest{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[20]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1200,7 +1389,7 @@ func (x *AckControlUpdateRequest) String() string {
 func (*AckControlUpdateRequest) ProtoMessage() {}
 
 func (x *AckControlUpdateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[20]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1213,7 +1402,7 @@ func (x *AckControlUpdateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AckControlUpdateRequest.ProtoReflect.Descriptor instead.
 func (*AckControlUpdateRequest) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{20}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *AckControlUpdateRequest) GetNodeId() string {
@@ -1252,7 +1441,7 @@ type AckControlUpdateResponse struct {
 
 func (x *AckControlUpdateResponse) Reset() {
 	*x = AckControlUpdateResponse{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[21]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1264,7 +1453,7 @@ func (x *AckControlUpdateResponse) String() string {
 func (*AckControlUpdateResponse) ProtoMessage() {}
 
 func (x *AckControlUpdateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[21]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1277,7 +1466,7 @@ func (x *AckControlUpdateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AckControlUpdateResponse.ProtoReflect.Descriptor instead.
 func (*AckControlUpdateResponse) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{21}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{25}
 }
 
 type ExportBackupRequest struct {
@@ -1288,7 +1477,7 @@ type ExportBackupRequest struct {
 
 func (x *ExportBackupRequest) Reset() {
 	*x = ExportBackupRequest{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[22]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1300,7 +1489,7 @@ func (x *ExportBackupRequest) String() string {
 func (*ExportBackupRequest) ProtoMessage() {}
 
 func (x *ExportBackupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[22]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1313,7 +1502,7 @@ func (x *ExportBackupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportBackupRequest.ProtoReflect.Descriptor instead.
 func (*ExportBackupRequest) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{22}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{26}
 }
 
 type ExportBackupResponse struct {
@@ -1325,7 +1514,7 @@ type ExportBackupResponse struct {
 
 func (x *ExportBackupResponse) Reset() {
 	*x = ExportBackupResponse{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[23]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1337,7 +1526,7 @@ func (x *ExportBackupResponse) String() string {
 func (*ExportBackupResponse) ProtoMessage() {}
 
 func (x *ExportBackupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[23]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1350,7 +1539,7 @@ func (x *ExportBackupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportBackupResponse.ProtoReflect.Descriptor instead.
 func (*ExportBackupResponse) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{23}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *ExportBackupResponse) GetBundle() []byte {
@@ -1369,7 +1558,7 @@ type RestoreBackupRequest struct {
 
 func (x *RestoreBackupRequest) Reset() {
 	*x = RestoreBackupRequest{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[24]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1381,7 +1570,7 @@ func (x *RestoreBackupRequest) String() string {
 func (*RestoreBackupRequest) ProtoMessage() {}
 
 func (x *RestoreBackupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[24]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1394,7 +1583,7 @@ func (x *RestoreBackupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestoreBackupRequest.ProtoReflect.Descriptor instead.
 func (*RestoreBackupRequest) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{24}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *RestoreBackupRequest) GetBundle() []byte {
@@ -1414,7 +1603,7 @@ type RestoreBackupResponse struct {
 
 func (x *RestoreBackupResponse) Reset() {
 	*x = RestoreBackupResponse{}
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[25]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1426,7 +1615,7 @@ func (x *RestoreBackupResponse) String() string {
 func (*RestoreBackupResponse) ProtoMessage() {}
 
 func (x *RestoreBackupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_urguard_v1_crypto_control_proto_msgTypes[25]
+	mi := &file_urguard_v1_crypto_control_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1439,7 +1628,7 @@ func (x *RestoreBackupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestoreBackupResponse.ProtoReflect.Descriptor instead.
 func (*RestoreBackupResponse) Descriptor() ([]byte, []int) {
-	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{25}
+	return file_urguard_v1_crypto_control_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *RestoreBackupResponse) GetState() *EpochState {
@@ -1461,7 +1650,16 @@ var File_urguard_v1_crypto_control_proto protoreflect.FileDescriptor
 const file_urguard_v1_crypto_control_proto_rawDesc = "" +
 	"\n" +
 	"\x1furguard/v1/crypto_control.proto\x12\n" +
-	"urguard.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xe9\x01\n" +
+	"urguard.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x17\n" +
+	"\x15GetWitnessHeadRequest\"9\n" +
+	"\x16GetWitnessHeadResponse\x12\x1f\n" +
+	"\vsigned_head\x18\x01 \x01(\fR\n" +
+	"signedHead\"d\n" +
+	"\x18AcceptWitnessHeadRequest\x12\x1f\n" +
+	"\vsigned_head\x18\x01 \x01(\fR\n" +
+	"signedHead\x12'\n" +
+	"\x0fcanonical_event\x18\x02 \x01(\fR\x0ecanonicalEvent\"\x1b\n" +
+	"\x19AcceptWitnessHeadResponse\"\xe9\x01\n" +
 	"\x0eDeviceIdentity\x12\x19\n" +
 	"\bowner_id\x18\x01 \x01(\tR\aownerId\x12\x1b\n" +
 	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId\x12\x15\n" +
@@ -1492,11 +1690,12 @@ const file_urguard_v1_crypto_control_proto_rawDesc = "" +
 	"\x06device\x18\x01 \x01(\v2\x1a.urguard.v1.DeviceIdentityR\x06device\x12)\n" +
 	"\x10enrollment_proof\x18\x02 \x01(\fR\x0fenrollmentProof\"J\n" +
 	"\x14EnrollDeviceResponse\x122\n" +
-	"\x06device\x18\x01 \x01(\v2\x1a.urguard.v1.DeviceIdentityR\x06device\"\xa2\x01\n" +
+	"\x06device\x18\x01 \x01(\v2\x1a.urguard.v1.DeviceIdentityR\x06device\"\xd0\x01\n" +
 	"\x15ReenrollDeviceRequest\x12$\n" +
 	"\x0elost_device_id\x18\x01 \x01(\tR\flostDeviceId\x12<\n" +
 	"\vreplacement\x18\x02 \x01(\v2\x1a.urguard.v1.DeviceIdentityR\vreplacement\x12%\n" +
-	"\x0erecovery_proof\x18\x03 \x01(\fR\rrecoveryProof\"}\n" +
+	"\x0erecovery_proof\x18\x03 \x01(\fR\rrecoveryProof\x12,\n" +
+	"\x12recovery_device_id\x18\x04 \x01(\tR\x10recoveryDeviceId\"}\n" +
 	"\x16ReenrollDeviceResponse\x122\n" +
 	"\x06device\x18\x01 \x01(\v2\x1a.urguard.v1.DeviceIdentityR\x06device\x12/\n" +
 	"\x13resources_rewrapped\x18\x02 \x01(\x04R\x12resourcesRewrapped\"L\n" +
@@ -1530,13 +1729,14 @@ const file_urguard_v1_crypto_control_proto_rawDesc = "" +
 	"\x1bStreamControlUpdatesRequest\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12$\n" +
 	"\x0elast_crl_epoch\x18\x02 \x01(\x04R\flastCrlEpoch\x12$\n" +
-	"\x0elast_key_epoch\x18\x03 \x01(\x04R\flastKeyEpoch\"\x8d\x02\n" +
+	"\x0elast_key_epoch\x18\x03 \x01(\x04R\flastKeyEpoch\"\xc3\x02\n" +
 	"\x1cStreamControlUpdatesResponse\x12,\n" +
 	"\x05state\x18\x01 \x01(\v2\x16.urguard.v1.EpochStateR\x05state\x12\x1b\n" +
 	"\tcrl_epoch\x18\x02 \x01(\x04R\bcrlEpoch\x128\n" +
 	"\vrevocations\x18\x03 \x03(\v2\x16.urguard.v1.RevocationR\vrevocations\x127\n" +
 	"\tissued_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\bissuedAt\x12/\n" +
-	"\x13authority_signature\x18\x05 \x01(\fR\x12authoritySignature\"\xa9\x01\n" +
+	"\x13authority_signature\x18\x05 \x01(\fR\x12authoritySignature\x124\n" +
+	"\adevices\x18\x06 \x03(\v2\x1a.urguard.v1.DeviceIdentityR\adevices\"\xa9\x01\n" +
 	"\x17AckControlUpdateRequest\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x1b\n" +
 	"\tcrl_epoch\x18\x02 \x01(\x04R\bcrlEpoch\x12\x1b\n" +
@@ -1557,7 +1757,10 @@ const file_urguard_v1_crypto_control_proto_rawDesc = "" +
 	"\x13ROTATION_PHASE_IDLE\x10\x01\x12\x1c\n" +
 	"\x18ROTATION_PHASE_PREPARING\x10\x02\x12\x1c\n" +
 	"\x18ROTATION_PHASE_COMMITTED\x10\x03\x12\"\n" +
-	"\x1eROTATION_PHASE_CUTOFF_ENFORCED\x10\x042\xfd\a\n" +
+	"\x1eROTATION_PHASE_CUTOFF_ENFORCED\x10\x042\xd0\x01\n" +
+	"\x13AuditWitnessService\x12W\n" +
+	"\x0eGetWitnessHead\x12!.urguard.v1.GetWitnessHeadRequest\x1a\".urguard.v1.GetWitnessHeadResponse\x12`\n" +
+	"\x11AcceptWitnessHead\x12$.urguard.v1.AcceptWitnessHeadRequest\x1a%.urguard.v1.AcceptWitnessHeadResponse2\xfd\a\n" +
 	"\x14CryptoControlService\x12Q\n" +
 	"\fEnrollDevice\x12\x1f.urguard.v1.EnrollDeviceRequest\x1a .urguard.v1.EnrollDeviceResponse\x12W\n" +
 	"\x0eReenrollDevice\x12!.urguard.v1.ReenrollDeviceRequest\x1a\".urguard.v1.ReenrollDeviceResponse\x12Z\n" +
@@ -1584,86 +1787,95 @@ func file_urguard_v1_crypto_control_proto_rawDescGZIP() []byte {
 }
 
 var file_urguard_v1_crypto_control_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_urguard_v1_crypto_control_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
+var file_urguard_v1_crypto_control_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
 var file_urguard_v1_crypto_control_proto_goTypes = []any{
 	(RotationPhase)(0),                   // 0: urguard.v1.RotationPhase
-	(*DeviceIdentity)(nil),               // 1: urguard.v1.DeviceIdentity
-	(*EpochState)(nil),                   // 2: urguard.v1.EpochState
-	(*Revocation)(nil),                   // 3: urguard.v1.Revocation
-	(*NodeEnforcement)(nil),              // 4: urguard.v1.NodeEnforcement
-	(*EnrollDeviceRequest)(nil),          // 5: urguard.v1.EnrollDeviceRequest
-	(*EnrollDeviceResponse)(nil),         // 6: urguard.v1.EnrollDeviceResponse
-	(*ReenrollDeviceRequest)(nil),        // 7: urguard.v1.ReenrollDeviceRequest
-	(*ReenrollDeviceResponse)(nil),       // 8: urguard.v1.ReenrollDeviceResponse
-	(*PrepareRotationRequest)(nil),       // 9: urguard.v1.PrepareRotationRequest
-	(*PrepareRotationResponse)(nil),      // 10: urguard.v1.PrepareRotationResponse
-	(*CommitRotationRequest)(nil),        // 11: urguard.v1.CommitRotationRequest
-	(*CommitRotationResponse)(nil),       // 12: urguard.v1.CommitRotationResponse
-	(*GetEpochStateRequest)(nil),         // 13: urguard.v1.GetEpochStateRequest
-	(*GetEpochStateResponse)(nil),        // 14: urguard.v1.GetEpochStateResponse
-	(*RevokeDeviceRequest)(nil),          // 15: urguard.v1.RevokeDeviceRequest
-	(*RevokeDeviceResponse)(nil),         // 16: urguard.v1.RevokeDeviceResponse
-	(*GetRevocationStatusRequest)(nil),   // 17: urguard.v1.GetRevocationStatusRequest
-	(*GetRevocationStatusResponse)(nil),  // 18: urguard.v1.GetRevocationStatusResponse
-	(*StreamControlUpdatesRequest)(nil),  // 19: urguard.v1.StreamControlUpdatesRequest
-	(*StreamControlUpdatesResponse)(nil), // 20: urguard.v1.StreamControlUpdatesResponse
-	(*AckControlUpdateRequest)(nil),      // 21: urguard.v1.AckControlUpdateRequest
-	(*AckControlUpdateResponse)(nil),     // 22: urguard.v1.AckControlUpdateResponse
-	(*ExportBackupRequest)(nil),          // 23: urguard.v1.ExportBackupRequest
-	(*ExportBackupResponse)(nil),         // 24: urguard.v1.ExportBackupResponse
-	(*RestoreBackupRequest)(nil),         // 25: urguard.v1.RestoreBackupRequest
-	(*RestoreBackupResponse)(nil),        // 26: urguard.v1.RestoreBackupResponse
-	(*timestamppb.Timestamp)(nil),        // 27: google.protobuf.Timestamp
+	(*GetWitnessHeadRequest)(nil),        // 1: urguard.v1.GetWitnessHeadRequest
+	(*GetWitnessHeadResponse)(nil),       // 2: urguard.v1.GetWitnessHeadResponse
+	(*AcceptWitnessHeadRequest)(nil),     // 3: urguard.v1.AcceptWitnessHeadRequest
+	(*AcceptWitnessHeadResponse)(nil),    // 4: urguard.v1.AcceptWitnessHeadResponse
+	(*DeviceIdentity)(nil),               // 5: urguard.v1.DeviceIdentity
+	(*EpochState)(nil),                   // 6: urguard.v1.EpochState
+	(*Revocation)(nil),                   // 7: urguard.v1.Revocation
+	(*NodeEnforcement)(nil),              // 8: urguard.v1.NodeEnforcement
+	(*EnrollDeviceRequest)(nil),          // 9: urguard.v1.EnrollDeviceRequest
+	(*EnrollDeviceResponse)(nil),         // 10: urguard.v1.EnrollDeviceResponse
+	(*ReenrollDeviceRequest)(nil),        // 11: urguard.v1.ReenrollDeviceRequest
+	(*ReenrollDeviceResponse)(nil),       // 12: urguard.v1.ReenrollDeviceResponse
+	(*PrepareRotationRequest)(nil),       // 13: urguard.v1.PrepareRotationRequest
+	(*PrepareRotationResponse)(nil),      // 14: urguard.v1.PrepareRotationResponse
+	(*CommitRotationRequest)(nil),        // 15: urguard.v1.CommitRotationRequest
+	(*CommitRotationResponse)(nil),       // 16: urguard.v1.CommitRotationResponse
+	(*GetEpochStateRequest)(nil),         // 17: urguard.v1.GetEpochStateRequest
+	(*GetEpochStateResponse)(nil),        // 18: urguard.v1.GetEpochStateResponse
+	(*RevokeDeviceRequest)(nil),          // 19: urguard.v1.RevokeDeviceRequest
+	(*RevokeDeviceResponse)(nil),         // 20: urguard.v1.RevokeDeviceResponse
+	(*GetRevocationStatusRequest)(nil),   // 21: urguard.v1.GetRevocationStatusRequest
+	(*GetRevocationStatusResponse)(nil),  // 22: urguard.v1.GetRevocationStatusResponse
+	(*StreamControlUpdatesRequest)(nil),  // 23: urguard.v1.StreamControlUpdatesRequest
+	(*StreamControlUpdatesResponse)(nil), // 24: urguard.v1.StreamControlUpdatesResponse
+	(*AckControlUpdateRequest)(nil),      // 25: urguard.v1.AckControlUpdateRequest
+	(*AckControlUpdateResponse)(nil),     // 26: urguard.v1.AckControlUpdateResponse
+	(*ExportBackupRequest)(nil),          // 27: urguard.v1.ExportBackupRequest
+	(*ExportBackupResponse)(nil),         // 28: urguard.v1.ExportBackupResponse
+	(*RestoreBackupRequest)(nil),         // 29: urguard.v1.RestoreBackupRequest
+	(*RestoreBackupResponse)(nil),        // 30: urguard.v1.RestoreBackupResponse
+	(*timestamppb.Timestamp)(nil),        // 31: google.protobuf.Timestamp
 }
 var file_urguard_v1_crypto_control_proto_depIdxs = []int32{
 	0,  // 0: urguard.v1.EpochState.phase:type_name -> urguard.v1.RotationPhase
-	27, // 1: urguard.v1.EpochState.committed_at:type_name -> google.protobuf.Timestamp
-	27, // 2: urguard.v1.EpochState.cutoff_at:type_name -> google.protobuf.Timestamp
-	27, // 3: urguard.v1.Revocation.issued_at:type_name -> google.protobuf.Timestamp
-	27, // 4: urguard.v1.NodeEnforcement.enforced_at:type_name -> google.protobuf.Timestamp
-	27, // 5: urguard.v1.NodeEnforcement.acknowledged_at:type_name -> google.protobuf.Timestamp
-	1,  // 6: urguard.v1.EnrollDeviceRequest.device:type_name -> urguard.v1.DeviceIdentity
-	1,  // 7: urguard.v1.EnrollDeviceResponse.device:type_name -> urguard.v1.DeviceIdentity
-	1,  // 8: urguard.v1.ReenrollDeviceRequest.replacement:type_name -> urguard.v1.DeviceIdentity
-	1,  // 9: urguard.v1.ReenrollDeviceResponse.device:type_name -> urguard.v1.DeviceIdentity
-	2,  // 10: urguard.v1.PrepareRotationResponse.state:type_name -> urguard.v1.EpochState
-	2,  // 11: urguard.v1.CommitRotationResponse.state:type_name -> urguard.v1.EpochState
-	2,  // 12: urguard.v1.GetEpochStateResponse.state:type_name -> urguard.v1.EpochState
-	3,  // 13: urguard.v1.RevokeDeviceResponse.revocation:type_name -> urguard.v1.Revocation
-	3,  // 14: urguard.v1.GetRevocationStatusResponse.revocation:type_name -> urguard.v1.Revocation
-	4,  // 15: urguard.v1.GetRevocationStatusResponse.nodes:type_name -> urguard.v1.NodeEnforcement
-	2,  // 16: urguard.v1.StreamControlUpdatesResponse.state:type_name -> urguard.v1.EpochState
-	3,  // 17: urguard.v1.StreamControlUpdatesResponse.revocations:type_name -> urguard.v1.Revocation
-	27, // 18: urguard.v1.StreamControlUpdatesResponse.issued_at:type_name -> google.protobuf.Timestamp
-	27, // 19: urguard.v1.AckControlUpdateRequest.enforced_at:type_name -> google.protobuf.Timestamp
-	2,  // 20: urguard.v1.RestoreBackupResponse.state:type_name -> urguard.v1.EpochState
-	5,  // 21: urguard.v1.CryptoControlService.EnrollDevice:input_type -> urguard.v1.EnrollDeviceRequest
-	7,  // 22: urguard.v1.CryptoControlService.ReenrollDevice:input_type -> urguard.v1.ReenrollDeviceRequest
-	9,  // 23: urguard.v1.CryptoControlService.PrepareRotation:input_type -> urguard.v1.PrepareRotationRequest
-	11, // 24: urguard.v1.CryptoControlService.CommitRotation:input_type -> urguard.v1.CommitRotationRequest
-	13, // 25: urguard.v1.CryptoControlService.GetEpochState:input_type -> urguard.v1.GetEpochStateRequest
-	15, // 26: urguard.v1.CryptoControlService.RevokeDevice:input_type -> urguard.v1.RevokeDeviceRequest
-	17, // 27: urguard.v1.CryptoControlService.GetRevocationStatus:input_type -> urguard.v1.GetRevocationStatusRequest
-	19, // 28: urguard.v1.CryptoControlService.StreamControlUpdates:input_type -> urguard.v1.StreamControlUpdatesRequest
-	21, // 29: urguard.v1.CryptoControlService.AckControlUpdate:input_type -> urguard.v1.AckControlUpdateRequest
-	23, // 30: urguard.v1.CryptoControlService.ExportBackup:input_type -> urguard.v1.ExportBackupRequest
-	25, // 31: urguard.v1.CryptoControlService.RestoreBackup:input_type -> urguard.v1.RestoreBackupRequest
-	6,  // 32: urguard.v1.CryptoControlService.EnrollDevice:output_type -> urguard.v1.EnrollDeviceResponse
-	8,  // 33: urguard.v1.CryptoControlService.ReenrollDevice:output_type -> urguard.v1.ReenrollDeviceResponse
-	10, // 34: urguard.v1.CryptoControlService.PrepareRotation:output_type -> urguard.v1.PrepareRotationResponse
-	12, // 35: urguard.v1.CryptoControlService.CommitRotation:output_type -> urguard.v1.CommitRotationResponse
-	14, // 36: urguard.v1.CryptoControlService.GetEpochState:output_type -> urguard.v1.GetEpochStateResponse
-	16, // 37: urguard.v1.CryptoControlService.RevokeDevice:output_type -> urguard.v1.RevokeDeviceResponse
-	18, // 38: urguard.v1.CryptoControlService.GetRevocationStatus:output_type -> urguard.v1.GetRevocationStatusResponse
-	20, // 39: urguard.v1.CryptoControlService.StreamControlUpdates:output_type -> urguard.v1.StreamControlUpdatesResponse
-	22, // 40: urguard.v1.CryptoControlService.AckControlUpdate:output_type -> urguard.v1.AckControlUpdateResponse
-	24, // 41: urguard.v1.CryptoControlService.ExportBackup:output_type -> urguard.v1.ExportBackupResponse
-	26, // 42: urguard.v1.CryptoControlService.RestoreBackup:output_type -> urguard.v1.RestoreBackupResponse
-	32, // [32:43] is the sub-list for method output_type
-	21, // [21:32] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	31, // 1: urguard.v1.EpochState.committed_at:type_name -> google.protobuf.Timestamp
+	31, // 2: urguard.v1.EpochState.cutoff_at:type_name -> google.protobuf.Timestamp
+	31, // 3: urguard.v1.Revocation.issued_at:type_name -> google.protobuf.Timestamp
+	31, // 4: urguard.v1.NodeEnforcement.enforced_at:type_name -> google.protobuf.Timestamp
+	31, // 5: urguard.v1.NodeEnforcement.acknowledged_at:type_name -> google.protobuf.Timestamp
+	5,  // 6: urguard.v1.EnrollDeviceRequest.device:type_name -> urguard.v1.DeviceIdentity
+	5,  // 7: urguard.v1.EnrollDeviceResponse.device:type_name -> urguard.v1.DeviceIdentity
+	5,  // 8: urguard.v1.ReenrollDeviceRequest.replacement:type_name -> urguard.v1.DeviceIdentity
+	5,  // 9: urguard.v1.ReenrollDeviceResponse.device:type_name -> urguard.v1.DeviceIdentity
+	6,  // 10: urguard.v1.PrepareRotationResponse.state:type_name -> urguard.v1.EpochState
+	6,  // 11: urguard.v1.CommitRotationResponse.state:type_name -> urguard.v1.EpochState
+	6,  // 12: urguard.v1.GetEpochStateResponse.state:type_name -> urguard.v1.EpochState
+	7,  // 13: urguard.v1.RevokeDeviceResponse.revocation:type_name -> urguard.v1.Revocation
+	7,  // 14: urguard.v1.GetRevocationStatusResponse.revocation:type_name -> urguard.v1.Revocation
+	8,  // 15: urguard.v1.GetRevocationStatusResponse.nodes:type_name -> urguard.v1.NodeEnforcement
+	6,  // 16: urguard.v1.StreamControlUpdatesResponse.state:type_name -> urguard.v1.EpochState
+	7,  // 17: urguard.v1.StreamControlUpdatesResponse.revocations:type_name -> urguard.v1.Revocation
+	31, // 18: urguard.v1.StreamControlUpdatesResponse.issued_at:type_name -> google.protobuf.Timestamp
+	5,  // 19: urguard.v1.StreamControlUpdatesResponse.devices:type_name -> urguard.v1.DeviceIdentity
+	31, // 20: urguard.v1.AckControlUpdateRequest.enforced_at:type_name -> google.protobuf.Timestamp
+	6,  // 21: urguard.v1.RestoreBackupResponse.state:type_name -> urguard.v1.EpochState
+	1,  // 22: urguard.v1.AuditWitnessService.GetWitnessHead:input_type -> urguard.v1.GetWitnessHeadRequest
+	3,  // 23: urguard.v1.AuditWitnessService.AcceptWitnessHead:input_type -> urguard.v1.AcceptWitnessHeadRequest
+	9,  // 24: urguard.v1.CryptoControlService.EnrollDevice:input_type -> urguard.v1.EnrollDeviceRequest
+	11, // 25: urguard.v1.CryptoControlService.ReenrollDevice:input_type -> urguard.v1.ReenrollDeviceRequest
+	13, // 26: urguard.v1.CryptoControlService.PrepareRotation:input_type -> urguard.v1.PrepareRotationRequest
+	15, // 27: urguard.v1.CryptoControlService.CommitRotation:input_type -> urguard.v1.CommitRotationRequest
+	17, // 28: urguard.v1.CryptoControlService.GetEpochState:input_type -> urguard.v1.GetEpochStateRequest
+	19, // 29: urguard.v1.CryptoControlService.RevokeDevice:input_type -> urguard.v1.RevokeDeviceRequest
+	21, // 30: urguard.v1.CryptoControlService.GetRevocationStatus:input_type -> urguard.v1.GetRevocationStatusRequest
+	23, // 31: urguard.v1.CryptoControlService.StreamControlUpdates:input_type -> urguard.v1.StreamControlUpdatesRequest
+	25, // 32: urguard.v1.CryptoControlService.AckControlUpdate:input_type -> urguard.v1.AckControlUpdateRequest
+	27, // 33: urguard.v1.CryptoControlService.ExportBackup:input_type -> urguard.v1.ExportBackupRequest
+	29, // 34: urguard.v1.CryptoControlService.RestoreBackup:input_type -> urguard.v1.RestoreBackupRequest
+	2,  // 35: urguard.v1.AuditWitnessService.GetWitnessHead:output_type -> urguard.v1.GetWitnessHeadResponse
+	4,  // 36: urguard.v1.AuditWitnessService.AcceptWitnessHead:output_type -> urguard.v1.AcceptWitnessHeadResponse
+	10, // 37: urguard.v1.CryptoControlService.EnrollDevice:output_type -> urguard.v1.EnrollDeviceResponse
+	12, // 38: urguard.v1.CryptoControlService.ReenrollDevice:output_type -> urguard.v1.ReenrollDeviceResponse
+	14, // 39: urguard.v1.CryptoControlService.PrepareRotation:output_type -> urguard.v1.PrepareRotationResponse
+	16, // 40: urguard.v1.CryptoControlService.CommitRotation:output_type -> urguard.v1.CommitRotationResponse
+	18, // 41: urguard.v1.CryptoControlService.GetEpochState:output_type -> urguard.v1.GetEpochStateResponse
+	20, // 42: urguard.v1.CryptoControlService.RevokeDevice:output_type -> urguard.v1.RevokeDeviceResponse
+	22, // 43: urguard.v1.CryptoControlService.GetRevocationStatus:output_type -> urguard.v1.GetRevocationStatusResponse
+	24, // 44: urguard.v1.CryptoControlService.StreamControlUpdates:output_type -> urguard.v1.StreamControlUpdatesResponse
+	26, // 45: urguard.v1.CryptoControlService.AckControlUpdate:output_type -> urguard.v1.AckControlUpdateResponse
+	28, // 46: urguard.v1.CryptoControlService.ExportBackup:output_type -> urguard.v1.ExportBackupResponse
+	30, // 47: urguard.v1.CryptoControlService.RestoreBackup:output_type -> urguard.v1.RestoreBackupResponse
+	35, // [35:48] is the sub-list for method output_type
+	22, // [22:35] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_urguard_v1_crypto_control_proto_init() }
@@ -1671,16 +1883,16 @@ func file_urguard_v1_crypto_control_proto_init() {
 	if File_urguard_v1_crypto_control_proto != nil {
 		return
 	}
-	file_urguard_v1_crypto_control_proto_msgTypes[17].OneofWrappers = []any{}
+	file_urguard_v1_crypto_control_proto_msgTypes[21].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_urguard_v1_crypto_control_proto_rawDesc), len(file_urguard_v1_crypto_control_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   26,
+			NumMessages:   30,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   2,
 		},
 		GoTypes:           file_urguard_v1_crypto_control_proto_goTypes,
 		DependencyIndexes: file_urguard_v1_crypto_control_proto_depIdxs,

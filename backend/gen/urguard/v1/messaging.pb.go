@@ -79,6 +79,7 @@ type InboxItem struct {
 	//	*InboxItem_Handshake
 	//	*InboxItem_Envelope
 	//	*InboxItem_Chunk
+	//	*InboxItem_Finalized
 	Payload       isInboxItem_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -155,6 +156,15 @@ func (x *InboxItem) GetChunk() *EncryptedChunk {
 	return nil
 }
 
+func (x *InboxItem) GetFinalized() *FinalizeTransferRequest {
+	if x != nil {
+		if x, ok := x.Payload.(*InboxItem_Finalized); ok {
+			return x.Finalized
+		}
+	}
+	return nil
+}
+
 type isInboxItem_Payload interface {
 	isInboxItem_Payload()
 }
@@ -171,11 +181,17 @@ type InboxItem_Chunk struct {
 	Chunk *EncryptedChunk `protobuf:"bytes,4,opt,name=chunk,proto3,oneof"`
 }
 
+type InboxItem_Finalized struct {
+	Finalized *FinalizeTransferRequest `protobuf:"bytes,5,opt,name=finalized,proto3,oneof"`
+}
+
 func (*InboxItem_Handshake) isInboxItem_Payload() {}
 
 func (*InboxItem_Envelope) isInboxItem_Payload() {}
 
 func (*InboxItem_Chunk) isInboxItem_Payload() {}
+
+func (*InboxItem_Finalized) isInboxItem_Payload() {}
 
 type SessionOffer struct {
 	state                      protoimpl.MessageState `protogen:"open.v1"`
@@ -1507,13 +1523,14 @@ var File_urguard_v1_messaging_proto protoreflect.FileDescriptor
 const file_urguard_v1_messaging_proto_rawDesc = "" +
 	"\n" +
 	"\x1aurguard/v1/messaging.proto\x12\n" +
-	"urguard.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xe4\x01\n" +
+	"urguard.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa9\x02\n" +
 	"\tInboxItem\x12\x1d\n" +
 	"\n" +
 	"message_id\x18\x01 \x01(\tR\tmessageId\x12<\n" +
 	"\thandshake\x18\x02 \x01(\v2\x1c.urguard.v1.SessionHandshakeH\x00R\thandshake\x12;\n" +
 	"\benvelope\x18\x03 \x01(\v2\x1d.urguard.v1.EncryptedEnvelopeH\x00R\benvelope\x122\n" +
-	"\x05chunk\x18\x04 \x01(\v2\x1a.urguard.v1.EncryptedChunkH\x00R\x05chunkB\t\n" +
+	"\x05chunk\x18\x04 \x01(\v2\x1a.urguard.v1.EncryptedChunkH\x00R\x05chunk\x12C\n" +
+	"\tfinalized\x18\x05 \x01(\v2#.urguard.v1.FinalizeTransferRequestH\x00R\tfinalizedB\t\n" +
 	"\apayload\"\xea\x02\n" +
 	"\fSessionOffer\x12\x19\n" +
 	"\boffer_id\x18\x01 \x01(\tR\aofferId\x12!\n" +
@@ -1677,42 +1694,43 @@ var file_urguard_v1_messaging_proto_depIdxs = []int32{
 	3,  // 0: urguard.v1.InboxItem.handshake:type_name -> urguard.v1.SessionHandshake
 	5,  // 1: urguard.v1.InboxItem.envelope:type_name -> urguard.v1.EncryptedEnvelope
 	6,  // 2: urguard.v1.InboxItem.chunk:type_name -> urguard.v1.EncryptedChunk
-	25, // 3: urguard.v1.SessionOffer.expires_at:type_name -> google.protobuf.Timestamp
-	2,  // 4: urguard.v1.SessionHandshake.offer:type_name -> urguard.v1.SessionOffer
-	25, // 5: urguard.v1.EnvelopeHeader.timestamp:type_name -> google.protobuf.Timestamp
-	4,  // 6: urguard.v1.EncryptedEnvelope.header:type_name -> urguard.v1.EnvelopeHeader
-	5,  // 7: urguard.v1.EncryptedChunk.envelope:type_name -> urguard.v1.EncryptedEnvelope
-	2,  // 8: urguard.v1.PublishSessionOfferRequest.offer:type_name -> urguard.v1.SessionOffer
-	2,  // 9: urguard.v1.GetSessionOfferResponse.offer:type_name -> urguard.v1.SessionOffer
-	3,  // 10: urguard.v1.OpenSessionRequest.handshake:type_name -> urguard.v1.SessionHandshake
-	25, // 11: urguard.v1.RequestResumeChallengeResponse.expires_at:type_name -> google.protobuf.Timestamp
-	5,  // 12: urguard.v1.SendEnvelopeRequest.envelope:type_name -> urguard.v1.EncryptedEnvelope
-	6,  // 13: urguard.v1.SendChunkRequest.chunk:type_name -> urguard.v1.EncryptedChunk
-	0,  // 14: urguard.v1.FinalizeTransferResponse.status:type_name -> urguard.v1.DeliveryStatus
-	1,  // 15: urguard.v1.GetInboxResponse.items:type_name -> urguard.v1.InboxItem
-	7,  // 16: urguard.v1.MessagingService.PublishSessionOffer:input_type -> urguard.v1.PublishSessionOfferRequest
-	9,  // 17: urguard.v1.MessagingService.GetSessionOffer:input_type -> urguard.v1.GetSessionOfferRequest
-	11, // 18: urguard.v1.MessagingService.OpenSession:input_type -> urguard.v1.OpenSessionRequest
-	13, // 19: urguard.v1.MessagingService.RequestResumeChallenge:input_type -> urguard.v1.RequestResumeChallengeRequest
-	15, // 20: urguard.v1.MessagingService.ResumeSession:input_type -> urguard.v1.ResumeSessionRequest
-	17, // 21: urguard.v1.MessagingService.SendEnvelope:input_type -> urguard.v1.SendEnvelopeRequest
-	19, // 22: urguard.v1.MessagingService.SendChunk:input_type -> urguard.v1.SendChunkRequest
-	21, // 23: urguard.v1.MessagingService.FinalizeTransfer:input_type -> urguard.v1.FinalizeTransferRequest
-	23, // 24: urguard.v1.MessagingService.GetInbox:input_type -> urguard.v1.GetInboxRequest
-	8,  // 25: urguard.v1.MessagingService.PublishSessionOffer:output_type -> urguard.v1.PublishSessionOfferResponse
-	10, // 26: urguard.v1.MessagingService.GetSessionOffer:output_type -> urguard.v1.GetSessionOfferResponse
-	12, // 27: urguard.v1.MessagingService.OpenSession:output_type -> urguard.v1.OpenSessionResponse
-	14, // 28: urguard.v1.MessagingService.RequestResumeChallenge:output_type -> urguard.v1.RequestResumeChallengeResponse
-	16, // 29: urguard.v1.MessagingService.ResumeSession:output_type -> urguard.v1.ResumeSessionResponse
-	18, // 30: urguard.v1.MessagingService.SendEnvelope:output_type -> urguard.v1.SendEnvelopeResponse
-	20, // 31: urguard.v1.MessagingService.SendChunk:output_type -> urguard.v1.SendChunkResponse
-	22, // 32: urguard.v1.MessagingService.FinalizeTransfer:output_type -> urguard.v1.FinalizeTransferResponse
-	24, // 33: urguard.v1.MessagingService.GetInbox:output_type -> urguard.v1.GetInboxResponse
-	25, // [25:34] is the sub-list for method output_type
-	16, // [16:25] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	21, // 3: urguard.v1.InboxItem.finalized:type_name -> urguard.v1.FinalizeTransferRequest
+	25, // 4: urguard.v1.SessionOffer.expires_at:type_name -> google.protobuf.Timestamp
+	2,  // 5: urguard.v1.SessionHandshake.offer:type_name -> urguard.v1.SessionOffer
+	25, // 6: urguard.v1.EnvelopeHeader.timestamp:type_name -> google.protobuf.Timestamp
+	4,  // 7: urguard.v1.EncryptedEnvelope.header:type_name -> urguard.v1.EnvelopeHeader
+	5,  // 8: urguard.v1.EncryptedChunk.envelope:type_name -> urguard.v1.EncryptedEnvelope
+	2,  // 9: urguard.v1.PublishSessionOfferRequest.offer:type_name -> urguard.v1.SessionOffer
+	2,  // 10: urguard.v1.GetSessionOfferResponse.offer:type_name -> urguard.v1.SessionOffer
+	3,  // 11: urguard.v1.OpenSessionRequest.handshake:type_name -> urguard.v1.SessionHandshake
+	25, // 12: urguard.v1.RequestResumeChallengeResponse.expires_at:type_name -> google.protobuf.Timestamp
+	5,  // 13: urguard.v1.SendEnvelopeRequest.envelope:type_name -> urguard.v1.EncryptedEnvelope
+	6,  // 14: urguard.v1.SendChunkRequest.chunk:type_name -> urguard.v1.EncryptedChunk
+	0,  // 15: urguard.v1.FinalizeTransferResponse.status:type_name -> urguard.v1.DeliveryStatus
+	1,  // 16: urguard.v1.GetInboxResponse.items:type_name -> urguard.v1.InboxItem
+	7,  // 17: urguard.v1.MessagingService.PublishSessionOffer:input_type -> urguard.v1.PublishSessionOfferRequest
+	9,  // 18: urguard.v1.MessagingService.GetSessionOffer:input_type -> urguard.v1.GetSessionOfferRequest
+	11, // 19: urguard.v1.MessagingService.OpenSession:input_type -> urguard.v1.OpenSessionRequest
+	13, // 20: urguard.v1.MessagingService.RequestResumeChallenge:input_type -> urguard.v1.RequestResumeChallengeRequest
+	15, // 21: urguard.v1.MessagingService.ResumeSession:input_type -> urguard.v1.ResumeSessionRequest
+	17, // 22: urguard.v1.MessagingService.SendEnvelope:input_type -> urguard.v1.SendEnvelopeRequest
+	19, // 23: urguard.v1.MessagingService.SendChunk:input_type -> urguard.v1.SendChunkRequest
+	21, // 24: urguard.v1.MessagingService.FinalizeTransfer:input_type -> urguard.v1.FinalizeTransferRequest
+	23, // 25: urguard.v1.MessagingService.GetInbox:input_type -> urguard.v1.GetInboxRequest
+	8,  // 26: urguard.v1.MessagingService.PublishSessionOffer:output_type -> urguard.v1.PublishSessionOfferResponse
+	10, // 27: urguard.v1.MessagingService.GetSessionOffer:output_type -> urguard.v1.GetSessionOfferResponse
+	12, // 28: urguard.v1.MessagingService.OpenSession:output_type -> urguard.v1.OpenSessionResponse
+	14, // 29: urguard.v1.MessagingService.RequestResumeChallenge:output_type -> urguard.v1.RequestResumeChallengeResponse
+	16, // 30: urguard.v1.MessagingService.ResumeSession:output_type -> urguard.v1.ResumeSessionResponse
+	18, // 31: urguard.v1.MessagingService.SendEnvelope:output_type -> urguard.v1.SendEnvelopeResponse
+	20, // 32: urguard.v1.MessagingService.SendChunk:output_type -> urguard.v1.SendChunkResponse
+	22, // 33: urguard.v1.MessagingService.FinalizeTransfer:output_type -> urguard.v1.FinalizeTransferResponse
+	24, // 34: urguard.v1.MessagingService.GetInbox:output_type -> urguard.v1.GetInboxResponse
+	26, // [26:35] is the sub-list for method output_type
+	17, // [17:26] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_urguard_v1_messaging_proto_init() }
@@ -1724,6 +1742,7 @@ func file_urguard_v1_messaging_proto_init() {
 		(*InboxItem_Handshake)(nil),
 		(*InboxItem_Envelope)(nil),
 		(*InboxItem_Chunk)(nil),
+		(*InboxItem_Finalized)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

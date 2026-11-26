@@ -205,9 +205,9 @@ func epochKey(tx *bolt.Tx, epoch uint64) (*pqc.HybridKEMKeyPair, error) {
 	}
 	return pqc.ParseHybridKEMKeyPair(raw[:32], raw[32:])
 }
-func (s *Store) BeginPrepareRotation(expected uint64) (EpochState, error) {
+func (s *Store) BeginPrepareRotation(expected uint64, hooks ...CommitHook) (EpochState, error) {
 	var state EpochState
-	err := s.db.Update(func(tx *bolt.Tx) error {
+	err := s.update(hooks, func(tx *bolt.Tx) error {
 		var err error
 		state, err = readState(tx)
 		if err != nil {
@@ -233,9 +233,9 @@ func (s *Store) BeginPrepareRotation(expected uint64) (EpochState, error) {
 	}
 	return state, nil
 }
-func (s *Store) CommitPreparedRotation(prepared uint64, grace time.Duration) (EpochState, error) {
+func (s *Store) CommitPreparedRotation(prepared uint64, grace time.Duration, hooks ...CommitHook) (EpochState, error) {
 	var state EpochState
-	err := s.db.Update(func(tx *bolt.Tx) error {
+	err := s.update(hooks, func(tx *bolt.Tx) error {
 		var err error
 		state, err = readState(tx)
 		if err != nil {
@@ -267,7 +267,10 @@ func (s *Store) CommitPreparedRotation(prepared uint64, grace time.Duration) (Ep
 func validID(id string) bool {
 	return utf8.ValidString(id) && strings.TrimSpace(id) != "" && !strings.ContainsRune(id, 0)
 }
-func (s *Store) UpsertDevice(d Device) error {
+func (s *Store) UpsertDevice(d Device, hooks ...CommitHook) error {
+	return s.update(hooks, func(tx *bolt.Tx) error { return upsertDevice(tx, d) })
+}
+func upsertDevice(tx *bolt.Tx, d Device) error {
 	if !validID(d.ID) || !validID(d.OwnerID) || !validID(d.KeyID) || len(d.SigningPublic) != mldsa65.PublicKeySize {
 		return errors.New("invalid device identity")
 	}
@@ -277,41 +280,39 @@ func (s *Store) UpsertDevice(d Device) error {
 		return err
 	}
 	pqc.Zeroize(probe)
-	return s.db.Update(func(tx *bolt.Tx) error {
-		id := []byte(d.ID)
-		if bucket(tx, revoked).Get(id) != nil {
-			return ErrRevoked
-		}
-		b := bucket(tx, devices)
-		if old := b.Get(id); old != nil {
-			data, err := json.Marshal(d)
-			if err != nil {
-				return err
-			}
-			if bytes.Equal(old, data) {
-				return nil
-			}
-			return ErrConflict
-		}
-		err := b.ForEach(func(_, raw []byte) error {
-			var other Device
-			if err := json.Unmarshal(raw, &other); err != nil {
-				return err
-			}
-			if other.KeyID == d.KeyID || bytes.Equal(other.SigningPublic, d.SigningPublic) ||
-				(bytes.Equal(other.EncryptionPublic.X25519, d.EncryptionPublic.X25519) && bytes.Equal(other.EncryptionPublic.MLKEM768, d.EncryptionPublic.MLKEM768)) {
-				return ErrConflict
-			}
-			return nil
-		})
+	id := []byte(d.ID)
+	if bucket(tx, revoked).Get(id) != nil {
+		return ErrRevoked
+	}
+	b := bucket(tx, devices)
+	if old := b.Get(id); old != nil {
+		data, err := json.Marshal(d)
 		if err != nil {
 			return err
 		}
-		if err = putJSON(b, id, d); err != nil {
+		if bytes.Equal(old, data) {
+			return nil
+		}
+		return ErrConflict
+	}
+	err = b.ForEach(func(_, raw []byte) error {
+		var other Device
+		if err := json.Unmarshal(raw, &other); err != nil {
 			return err
 		}
-		return changed(tx)
+		if other.KeyID == d.KeyID || bytes.Equal(other.SigningPublic, d.SigningPublic) ||
+			(bytes.Equal(other.EncryptionPublic.X25519, d.EncryptionPublic.X25519) && bytes.Equal(other.EncryptionPublic.MLKEM768, d.EncryptionPublic.MLKEM768)) {
+			return ErrConflict
+		}
+		return nil
 	})
+	if err != nil {
+		return err
+	}
+	if err = putJSON(b, id, d); err != nil {
+		return err
+	}
+	return changed(tx)
 }
 func (s *Store) GetDevice(id string) (Device, error) {
 	return view(s, func(tx *bolt.Tx) (Device, error) { return readJSON[Device](bucket(tx, devices), []byte(id)) })
@@ -333,37 +334,40 @@ func (s *Store) ListDevices() ([]Device, error) {
 func (s *Store) IsDeviceRevoked(id string) (bool, error) {
 	return view(s, func(tx *bolt.Tx) (bool, error) { return bucket(tx, revoked).Get([]byte(id)) != nil, nil })
 }
-func (s *Store) RevokeDevice(id, reason string) (Revocation, error) {
+func (s *Store) RevokeDevice(id, reason string, hooks ...CommitHook) (Revocation, error) {
 	var r Revocation
-	err := s.db.Update(func(tx *bolt.Tx) error {
-		b := bucket(tx, revoked)
-		log := bucket(tx, history)
-		if seq := b.Get([]byte(id)); seq != nil {
-			var err error
-			r, err = readJSON[Revocation](log, seq)
-			return err
-		}
-		d, err := readJSON[Device](bucket(tx, devices), []byte(id))
-		if err != nil {
-			return err
-		}
-		seq, err := log.NextSequence()
-		if err != nil {
-			return err
-		}
-		r = Revocation{seq, id, d.KeyID, reason, time.Now().UTC()}
-		if err = putJSON(log, number(seq), r); err != nil {
-			return err
-		}
-		if err = b.Put([]byte(id), number(seq)); err != nil {
-			return err
-		}
-		return changed(tx)
+	err := s.update(hooks, func(tx *bolt.Tx) error {
+		return revokeDevice(tx, id, reason, &r)
 	})
 	if err != nil {
 		return Revocation{}, err
 	}
 	return r, nil
+}
+func revokeDevice(tx *bolt.Tx, id, reason string, r *Revocation) error {
+	b := bucket(tx, revoked)
+	log := bucket(tx, history)
+	if seq := b.Get([]byte(id)); seq != nil {
+		var err error
+		*r, err = readJSON[Revocation](log, seq)
+		return err
+	}
+	d, err := readJSON[Device](bucket(tx, devices), []byte(id))
+	if err != nil {
+		return err
+	}
+	seq, err := log.NextSequence()
+	if err != nil {
+		return err
+	}
+	*r = Revocation{seq, id, d.KeyID, reason, time.Now().UTC()}
+	if err = putJSON(log, number(seq), r); err != nil {
+		return err
+	}
+	if err = b.Put([]byte(id), number(seq)); err != nil {
+		return err
+	}
+	return changed(tx)
 }
 func (s *Store) ListRevocations(after uint64) ([]Revocation, error) {
 	return view(s, func(tx *bolt.Tx) ([]Revocation, error) {

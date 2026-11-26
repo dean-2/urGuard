@@ -21,6 +21,8 @@ import (
 const _ = connect.IsAtLeastVersion1_13_0
 
 const (
+	// AuditWitnessServiceName is the fully-qualified name of the AuditWitnessService service.
+	AuditWitnessServiceName = "urguard.v1.AuditWitnessService"
 	// CryptoControlServiceName is the fully-qualified name of the CryptoControlService service.
 	CryptoControlServiceName = "urguard.v1.CryptoControlService"
 )
@@ -33,6 +35,12 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// AuditWitnessServiceGetWitnessHeadProcedure is the fully-qualified name of the
+	// AuditWitnessService's GetWitnessHead RPC.
+	AuditWitnessServiceGetWitnessHeadProcedure = "/urguard.v1.AuditWitnessService/GetWitnessHead"
+	// AuditWitnessServiceAcceptWitnessHeadProcedure is the fully-qualified name of the
+	// AuditWitnessService's AcceptWitnessHead RPC.
+	AuditWitnessServiceAcceptWitnessHeadProcedure = "/urguard.v1.AuditWitnessService/AcceptWitnessHead"
 	// CryptoControlServiceEnrollDeviceProcedure is the fully-qualified name of the
 	// CryptoControlService's EnrollDevice RPC.
 	CryptoControlServiceEnrollDeviceProcedure = "/urguard.v1.CryptoControlService/EnrollDevice"
@@ -67,6 +75,102 @@ const (
 	// CryptoControlService's RestoreBackup RPC.
 	CryptoControlServiceRestoreBackupProcedure = "/urguard.v1.CryptoControlService/RestoreBackup"
 )
+
+// AuditWitnessServiceClient is a client for the urguard.v1.AuditWitnessService service.
+type AuditWitnessServiceClient interface {
+	GetWitnessHead(context.Context, *connect.Request[v1.GetWitnessHeadRequest]) (*connect.Response[v1.GetWitnessHeadResponse], error)
+	AcceptWitnessHead(context.Context, *connect.Request[v1.AcceptWitnessHeadRequest]) (*connect.Response[v1.AcceptWitnessHeadResponse], error)
+}
+
+// NewAuditWitnessServiceClient constructs a client for the urguard.v1.AuditWitnessService service.
+// By default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped
+// responses, and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
+// connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewAuditWitnessServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) AuditWitnessServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	auditWitnessServiceMethods := v1.File_urguard_v1_crypto_control_proto.Services().ByName("AuditWitnessService").Methods()
+	return &auditWitnessServiceClient{
+		getWitnessHead: connect.NewClient[v1.GetWitnessHeadRequest, v1.GetWitnessHeadResponse](
+			httpClient,
+			baseURL+AuditWitnessServiceGetWitnessHeadProcedure,
+			connect.WithSchema(auditWitnessServiceMethods.ByName("GetWitnessHead")),
+			connect.WithClientOptions(opts...),
+		),
+		acceptWitnessHead: connect.NewClient[v1.AcceptWitnessHeadRequest, v1.AcceptWitnessHeadResponse](
+			httpClient,
+			baseURL+AuditWitnessServiceAcceptWitnessHeadProcedure,
+			connect.WithSchema(auditWitnessServiceMethods.ByName("AcceptWitnessHead")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// auditWitnessServiceClient implements AuditWitnessServiceClient.
+type auditWitnessServiceClient struct {
+	getWitnessHead    *connect.Client[v1.GetWitnessHeadRequest, v1.GetWitnessHeadResponse]
+	acceptWitnessHead *connect.Client[v1.AcceptWitnessHeadRequest, v1.AcceptWitnessHeadResponse]
+}
+
+// GetWitnessHead calls urguard.v1.AuditWitnessService.GetWitnessHead.
+func (c *auditWitnessServiceClient) GetWitnessHead(ctx context.Context, req *connect.Request[v1.GetWitnessHeadRequest]) (*connect.Response[v1.GetWitnessHeadResponse], error) {
+	return c.getWitnessHead.CallUnary(ctx, req)
+}
+
+// AcceptWitnessHead calls urguard.v1.AuditWitnessService.AcceptWitnessHead.
+func (c *auditWitnessServiceClient) AcceptWitnessHead(ctx context.Context, req *connect.Request[v1.AcceptWitnessHeadRequest]) (*connect.Response[v1.AcceptWitnessHeadResponse], error) {
+	return c.acceptWitnessHead.CallUnary(ctx, req)
+}
+
+// AuditWitnessServiceHandler is an implementation of the urguard.v1.AuditWitnessService service.
+type AuditWitnessServiceHandler interface {
+	GetWitnessHead(context.Context, *connect.Request[v1.GetWitnessHeadRequest]) (*connect.Response[v1.GetWitnessHeadResponse], error)
+	AcceptWitnessHead(context.Context, *connect.Request[v1.AcceptWitnessHeadRequest]) (*connect.Response[v1.AcceptWitnessHeadResponse], error)
+}
+
+// NewAuditWitnessServiceHandler builds an HTTP handler from the service implementation. It returns
+// the path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewAuditWitnessServiceHandler(svc AuditWitnessServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	auditWitnessServiceMethods := v1.File_urguard_v1_crypto_control_proto.Services().ByName("AuditWitnessService").Methods()
+	auditWitnessServiceGetWitnessHeadHandler := connect.NewUnaryHandler(
+		AuditWitnessServiceGetWitnessHeadProcedure,
+		svc.GetWitnessHead,
+		connect.WithSchema(auditWitnessServiceMethods.ByName("GetWitnessHead")),
+		connect.WithHandlerOptions(opts...),
+	)
+	auditWitnessServiceAcceptWitnessHeadHandler := connect.NewUnaryHandler(
+		AuditWitnessServiceAcceptWitnessHeadProcedure,
+		svc.AcceptWitnessHead,
+		connect.WithSchema(auditWitnessServiceMethods.ByName("AcceptWitnessHead")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/urguard.v1.AuditWitnessService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case AuditWitnessServiceGetWitnessHeadProcedure:
+			auditWitnessServiceGetWitnessHeadHandler.ServeHTTP(w, r)
+		case AuditWitnessServiceAcceptWitnessHeadProcedure:
+			auditWitnessServiceAcceptWitnessHeadHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedAuditWitnessServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedAuditWitnessServiceHandler struct{}
+
+func (UnimplementedAuditWitnessServiceHandler) GetWitnessHead(context.Context, *connect.Request[v1.GetWitnessHeadRequest]) (*connect.Response[v1.GetWitnessHeadResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("urguard.v1.AuditWitnessService.GetWitnessHead is not implemented"))
+}
+
+func (UnimplementedAuditWitnessServiceHandler) AcceptWitnessHead(context.Context, *connect.Request[v1.AcceptWitnessHeadRequest]) (*connect.Response[v1.AcceptWitnessHeadResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("urguard.v1.AuditWitnessService.AcceptWitnessHead is not implemented"))
+}
 
 // CryptoControlServiceClient is a client for the urguard.v1.CryptoControlService service.
 type CryptoControlServiceClient interface {

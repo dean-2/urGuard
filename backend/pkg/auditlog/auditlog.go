@@ -216,6 +216,25 @@ func (l *Log) Append(e Event) (Record, error) {
 // AppendWithCheckpoint also returns the signed head for this exact commit.
 // Independent witness storage and acknowledgement happen after the transaction.
 func (l *Log) AppendWithCheckpoint(e Event) (Record, []byte, error) {
+	var row Record
+	var head []byte
+	err := l.db.Update(func(tx *bolt.Tx) error {
+		var err error
+		row, head, err = l.AppendInTx(tx, e)
+		return err
+	})
+	if err != nil {
+		return Record{}, nil, err
+	}
+	return row, head, nil
+}
+
+// AppendInTx commits an audit event and its witness queue entry in the caller's
+// authority-state transaction. A failed mutation or audit append rolls back both.
+func (l *Log) AppendInTx(tx *bolt.Tx, e Event) (Record, []byte, error) {
+	if tx.DB() != l.db || !tx.Writable() {
+		return Record{}, nil, errors.New("wrong audit transaction")
+	}
 	if e.Timestamp.IsZero() {
 		e.Timestamp = time.Now().UTC()
 	}
@@ -225,7 +244,7 @@ func (l *Log) AppendWithCheckpoint(e Event) (Record, []byte, error) {
 	}
 	var row Record
 	var signed []byte
-	err = l.db.Update(func(tx *bolt.Tx) error {
+	err = func() error {
 		meta, events, points := auditBuckets(tx)
 		if meta == nil || events == nil || points == nil {
 			return errors.New("incomplete audit history")
@@ -283,8 +302,13 @@ func (l *Log) AppendWithCheckpoint(e Event) (Record, []byte, error) {
 				return err
 			}
 		}
+		if q := tx.Bucket([]byte("audit_witness_pending")); q != nil {
+			if err := q.Put(id, signed); err != nil {
+				return err
+			}
+		}
 		return meta.Put([]byte("head"), signed)
-	})
+	}()
 	if err != nil {
 		return Record{}, nil, err
 	}

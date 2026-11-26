@@ -33,6 +33,7 @@ message InboxItem {
     SessionHandshake handshake = 2;
     EncryptedEnvelope envelope = 3;
     EncryptedChunk chunk = 4;
+    FinalizeTransferRequest finalized = 5;
   }
 }
 

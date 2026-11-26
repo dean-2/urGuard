@@ -122,12 +122,12 @@ func (s *Store) ExportBackup(passphrase []byte) ([]byte, error) {
 	return append(envelope, sig...), nil
 }
 
-func (s *Store) RestoreBackup(bundle, passphrase []byte) error {
+func (s *Store) RestoreBackup(bundle, passphrase []byte, hooks ...CommitHook) error {
 	pub, err := s.AuthorityPublicKey()
 	if err != nil {
 		return err
 	}
-	return s.restore(bundle, passphrase, pub, false)
+	return s.restore(bundle, passphrase, pub, false, hooks...)
 }
 
 // RestoreIntoFreshStore supports disaster recovery on a new database. Supply
@@ -138,7 +138,7 @@ func (s *Store) RestoreIntoFreshStore(bundle, passphrase, trustedPublic []byte) 
 	return s.restore(bundle, passphrase, trustedPublic, true)
 }
 
-func (s *Store) restore(bundle, passphrase, pub []byte, fresh bool) error {
+func (s *Store) restore(bundle, passphrase, pub []byte, fresh bool, hooks ...CommitHook) error {
 	var h backupHeader
 	size := binary.Size(h)
 	if len(passphrase) == 0 || len(bundle) < size+16+mldsa65.SignatureSize {
@@ -173,7 +173,7 @@ func (s *Store) restore(bundle, passphrase, pub []byte, fresh bool) error {
 		s.authorityMu.Lock()
 		defer s.authorityMu.Unlock()
 	}
-	return s.db.Update(func(tx *bolt.Tx) error {
+	return s.update(hooks, func(tx *bolt.Tx) error {
 		revision := bucket(tx, meta).Sequence()
 		local, err := authority(tx)
 		if err != nil {

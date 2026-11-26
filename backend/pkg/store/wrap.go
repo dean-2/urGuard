@@ -133,62 +133,83 @@ func (s *Store) ListSharedWraps(resource string) ([]SharedWrap, error) {
 func (s *Store) RewrapResourcesForReplacement(lost, replacement string) (int, error) {
 	count := 0
 	err := s.db.Update(func(tx *bolt.Tx) error {
-		registry := bucket(tx, devices)
-		old, err := readJSON[Device](registry, []byte(lost))
+		return rewrap(tx, lost, replacement, &count)
+	})
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+func rewrap(tx *bolt.Tx, lost, replacement string, count *int) error {
+	registry := bucket(tx, devices)
+	old, err := readJSON[Device](registry, []byte(lost))
+	if err != nil {
+		return err
+	}
+	next, err := readJSON[Device](registry, []byte(replacement))
+	if err != nil {
+		return err
+	}
+	denied := bucket(tx, revoked)
+	if denied.Get([]byte(lost)) == nil || old.OwnerID != next.OwnerID {
+		return ErrConflict
+	}
+	if denied.Get([]byte(replacement)) != nil {
+		return ErrRevoked
+	}
+	state, err := readState(tx)
+	if err != nil {
+		return err
+	}
+	b := bucket(tx, wraps)
+	// Collect IDs before mutating this bucket, so cursor movement cannot skip grants.
+	var ids []string
+	err = b.ForEach(func(k, _ []byte) error {
+		resource, device, ok := bytes.Cut(k, []byte{0})
+		if ok && string(device) == lost {
+			ids = append(ids, string(resource))
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	for _, id := range ids {
+		r, err := readJSON[SharedWrap](bucket(tx, resources), []byte(id))
 		if err != nil {
 			return err
 		}
-		next, err := readJSON[Device](registry, []byte(replacement))
+		dek, err := recoverDEK(tx, r)
 		if err != nil {
 			return err
 		}
-		denied := bucket(tx, revoked)
-		if denied.Get([]byte(lost)) == nil || old.OwnerID != next.OwnerID {
-			return ErrConflict
-		}
-		if denied.Get([]byte(replacement)) != nil {
-			return ErrRevoked
-		}
-		state, err := readState(tx)
+		err = writeWrap(b, wrapID(id, replacement), SharedWrap{ResourceID: id, DeviceID: replacement, Epoch: state.Active}, next.EncryptionPublic, dek)
+		pqc.Zeroize(dek)
 		if err != nil {
 			return err
 		}
-		b := bucket(tx, wraps)
-		// Collect IDs before mutating this bucket, so cursor movement cannot skip grants.
-		var ids []string
-		err = b.ForEach(func(k, _ []byte) error {
-			resource, device, ok := bytes.Cut(k, []byte{0})
-			if ok && string(device) == lost {
-				ids = append(ids, string(resource))
-			}
-			return nil
-		})
-		if err != nil {
+		if err = b.Delete(wrapID(id, lost)); err != nil {
 			return err
 		}
-		for _, id := range ids {
-			r, err := readJSON[SharedWrap](bucket(tx, resources), []byte(id))
-			if err != nil {
-				return err
-			}
-			dek, err := recoverDEK(tx, r)
-			if err != nil {
-				return err
-			}
-			err = writeWrap(b, wrapID(id, replacement), SharedWrap{ResourceID: id, DeviceID: replacement, Epoch: state.Active}, next.EncryptionPublic, dek)
-			pqc.Zeroize(dek)
-			if err != nil {
-				return err
-			}
-			if err = b.Delete(wrapID(id, lost)); err != nil {
-				return err
-			}
+	}
+	*count = len(ids)
+	if *count == 0 {
+		return nil
+	}
+	return changed(tx)
+}
+
+func (s *Store) ReplaceDevice(lost string, replacement Device, hooks ...CommitHook) (int, error) {
+	var count int
+	err := s.update(hooks, func(tx *bolt.Tx) error {
+		if err := upsertDevice(tx, replacement); err != nil {
+			return err
 		}
-		count = len(ids)
-		if count == 0 {
-			return nil
+		var r Revocation
+		if err := revokeDevice(tx, lost, "device replacement", &r); err != nil {
+			return err
 		}
-		return changed(tx)
+		return rewrap(tx, lost, replacement.ID, &count)
 	})
 	if err != nil {
 		return 0, err

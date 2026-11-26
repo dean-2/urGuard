@@ -2,6 +2,7 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/url"
@@ -12,23 +13,29 @@ import (
 )
 
 type Config struct {
-	ControlPlaneAddr    string
-	ControlPlaneDBPath  string
-	ControlPlaneGRPCTLS bool
-	RotationGrace       time.Duration
-	CRLHeartbeat        time.Duration
-	CheckpointInterval  uint32
-	MaxClockSkew        time.Duration
-	NodeID              string
-	NodeAddr            string
-	NodeDBPath          string
-	ControlPlaneURL     string
-	NodeURLs            []string
-	BackupPassphrase    string
+	ControlPlaneAddr                               string
+	ControlPlaneDBPath                             string
+	ControlPlaneGRPCTLS                            bool
+	RotationGrace                                  time.Duration
+	CRLHeartbeat                                   time.Duration
+	CheckpointInterval                             uint32
+	MaxClockSkew                                   time.Duration
+	NodeID                                         string
+	NodeAddr                                       string
+	NodeDBPath                                     string
+	ControlPlaneURL                                string
+	NodeURLs                                       []string
+	BackupPassphrase                               string
+	WitnessURL, WitnessDBPath, AuthorityPublicFile string
+	TLSCert, TLSKey, TLSCA                         string
+	RequiredNodes                                  []string
+	// Local h2c credentials indexed by principal (admin, controlplane, node:<id>, device:<id>).
+	Tokens map[string]string
 }
 
 // Load reads environment variables. An unset variable uses its documented default.
-func Load() (Config, error) { return load(os.LookupEnv) }
+func Load() (Config, error)        { return load(os.LookupEnv) }
+func LoadFromEnv() (Config, error) { return Load() }
 
 func load(lookup func(string) (string, bool)) (Config, error) {
 	get := func(key, fallback string) string {
@@ -47,6 +54,34 @@ func load(lookup func(string) (string, bool)) (Config, error) {
 		BackupPassphrase:   get("BACKUP_PASSPHRASE", ""),
 	}
 	var err error
+	c.WitnessURL = get("WITNESS_URL", "")
+	c.WitnessDBPath = get("WITNESS_DB_PATH", c.NodeDBPath+".witness")
+	c.AuthorityPublicFile = get("AUTHORITY_PUBLIC_FILE", "authority.pub")
+	c.TLSCert = get("TLS_CERT_FILE", "")
+	c.TLSKey = get("TLS_KEY_FILE", "")
+	c.TLSCA = get("TLS_CA_FILE", "")
+	if c.WitnessURL != "" && !validEndpoint(c.WitnessURL) {
+		return Config{}, fmt.Errorf("invalid URGUARD_WITNESS_URL")
+	}
+	seen := map[string]bool{}
+	for _, name := range strings.Split(get("REQUIRED_NODES", "node-1,node-2,node-3"), ",") {
+		name = strings.TrimSpace(name)
+		if name == "" || seen[name] {
+			return Config{}, fmt.Errorf("invalid URGUARD_REQUIRED_NODES")
+		}
+		seen[name] = true
+		c.RequiredNodes = append(c.RequiredNodes, name)
+	}
+	if err := json.Unmarshal([]byte(get("LOCAL_TOKENS", "{}")), &c.Tokens); err != nil {
+		return Config{}, fmt.Errorf("invalid URGUARD_LOCAL_TOKENS")
+	}
+	clear(seen)
+	for name, token := range c.Tokens {
+		if name == "" || len(token) < 32 || seen[token] {
+			return Config{}, fmt.Errorf("local credentials require distinct tokens of at least 32 bytes")
+		}
+		seen[token] = true
+	}
 	c.ControlPlaneGRPCTLS, err = strconv.ParseBool(get("CP_GRPC_TLS", "true"))
 	if err != nil {
 		return Config{}, fmt.Errorf("URGUARD_CP_GRPC_TLS must be a boolean")
