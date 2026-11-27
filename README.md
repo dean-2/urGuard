@@ -10,16 +10,16 @@ urGuard combines hybrid post-quantum end-to-end encryption (`X25519 + ML-KEM-768
 
 ```mermaid
 flowchart TB
-  UI["React + TypeScript Operator Console (Vite / Nginx :5173)"] -->|"ConnectRPC / HTTP (/api/)"| CP["Control Plane & Explainable Detector (Go :8080)"]
+  UI["React + TypeScript Operator Console (Vite / Nginx :5173)"] -->|"ConnectRPC & Console API (/api/, mTLS)"| CP["Control Plane & Explainable Detector (Go :8080)"]
   subgraph ControlPlane["Control Plane Services"]
     KA["Key Authority & WAL Store (Rotation / CRL / Backup)"]
     AL["Canonical Hash-Chained Audit Log (ML-DSA-65 Checkpoints)"]
     DET["Watermark Skew Buffer + Rule Engine + Identity-Service Graph"]
   end
   CP --- ControlPlane
-  CP -->|"gRPC Server-Streaming + PQC-mTLS (X25519MLKEM768)"| NA["Relay Node A (:8081)"]
-  CP -->|"gRPC Server-Streaming + PQC-mTLS"| NB["Relay Node B (:8082)"]
-  CP -->|"gRPC Server-Streaming + PQC-mTLS"| NC["Relay Node C (:8083)"]
+  CP -->|"gRPC Server-Streaming + PQC-mTLS (X25519MLKEM768)"| NA["Relay Node A & Audit Witness (:8081)"]
+  CP -->|"gRPC Server-Streaming + PQC-mTLS (X25519MLKEM768)"| NB["Relay Node B (:8082)"]
+  CP -->|"gRPC Server-Streaming + PQC-mTLS (X25519MLKEM768)"| NC["Relay Node C (:8083)"]
 ```
 
 ---
@@ -28,161 +28,144 @@ flowchart TB
 
 | Tool | Required Version | Verified Version | Notes |
 |---|---|---|---|
-| Git | `2.40+` | `2.50.1` | Required for cloning and LF line-ending handling |
-| Docker Engine | `24.0+` | `[TODO: verify local version]` | Linux container engine for multi-node stack |
-| Docker Compose | `v2.24+` | `[TODO: verify local version]` | Supports `env_file.required: false` |
-| Go | `1.24.2+` | `[TODO: verify local version]` | Required for `crypto/mlkem` and `X25519MLKEM768` |
-| Node.js | `22.13+` (`22.x` / `26.x`) | `26.13.1` | Required by Vite 8, Vitest 5, ESLint 10 |
-| npm | `10.0+` | `11.1.0` | Package installation and `frontend` scripts |
-| GNU Make | `4.0+` | `4.4.1` | Runs unified workflow targets |
-| OpenSSL | `3.x` | — | Used by `deployments/gen-certs.sh` (or Alpine container) |
+| Git | `2.40+` | `2.50.1` | Cloning and LF line-ending handling |
+| Docker Engine & Compose | `24.0+` / `v2.24+` | `29.8.2` | Multi-node PQC-mTLS container stack |
+| Go | `1.26.0+` | `1.27.1` | `crypto/mlkem`, `tls.X25519MLKEM768`, race tests |
+| Node.js & npm | `22.13+` / `10.0+` | `22.21.0` / `10.9.4` | Vite 8, Vitest 5, ConnectRPC TS codegen |
+| Python | `3.11+` (`3.12` judging) | `3.11.9` / `3.12` | Runs `track4_service.py` (`pqcrypto==0.4.0` for `protected_read`) |
+| GNU Make | `4.0+` | `4.4.1` | Unified workflow targets (via Git Bash on Windows) |
 
 ### Windows Notes
-- Run `make` and all `.sh` scripts inside **Git Bash** (not `cmd.exe` or Windows PowerShell, where `C:\Windows\System32\bash.exe` can shadow Git Bash).
-- LF line endings are enforced via `.gitattributes` and `.editorconfig`.
-- Ensure **Docker Desktop** is open with the Linux engine running before executing `make up` or `docker compose`.
-- Scripts export `MSYS_NO_PATHCONV=1` automatically so OpenSSL `-subj "/O=.../CN=..."` flags are not rewritten by Git Bash.
+- Run `make` and `.sh` scripts inside **Git Bash** (not `cmd.exe` or Windows PowerShell).
+- Use `.\scripts\verify_backend.ps1` when running backend checks natively in Windows PowerShell.
+- Ensure **Docker Desktop** (Linux container engine) is running before starting Compose.
 
 ---
 
-## One-Command Quickstart
+## Quickstart
 
+### Full Multi-Node Stack (Live mTLS Backend + Operator Console)
 ```bash
-cp .env.example .env && make up
+cp .env.example .env
+# Optional: set URGUARD_BACKUP_PASSPHRASE in .env to enable backup export/restore
+docker compose -f deployments/docker-compose.yml up --build -d
+```
+- Open **http://localhost:5173** for the live Operator Console (`VITE_USE_MOCKS=false`).
+- Services booted: `certs-init` -> `controlplane` (`:8080`) + `node-a` witness (`:8081`) + `node-b` (`:8082`) + `node-c` (`:8083`) + `frontend` (`:5173`).
+- Tear down cleanly with `docker compose -f deployments/docker-compose.yml down -v`.
+
+### Standalone UI Preview (Mock Mode)
+```bash
+cd frontend && npm ci && npm run dev
+```
+- Opens **http://localhost:5173** using the in-memory mock client (`VITE_USE_MOCKS=true` by default).
+
+---
+
+## Track 4 Judging Adapter (`track4_service.py`)
+
+At the repository root:
+- **`track4_service.py`** / **`team_app.py`**: Single-request-per-process Python 3.12 entry point (`stdin` JSON -> `stdout` JSON; generic `stderr` only on error).
+- **`threat-model.json`**: Root metadata (`{"asset":"protected-resource","boundary":"identity-check"}`).
+- **Persistence**: Uses durable SQLite (`PRAGMA synchronous = FULL`) stored in `TRACK4_STATE_DIR` (falling back to the OS temp directory on read-only containers).
+- **Supported operations**: `setup`, `read`, `revoke`, `audit`, and `protected_read` (raw Base64 `ML-KEM-768` encapsulation via `pqcrypto==0.4.0` + lowercase hex `HMAC-SHA256(shared_secret, challenge + stored_body)`).
+
+Run local & container verification:
+```bash
+python scripts/test_toolkit_adapter.py
 ```
 
-- **Full multi-node stack** (requires `backend/` merged by Engineers A & B): starts `certs-init` → `controlplane` (`:8080`) → `node-a/b/c` (`:8081–:8083`) → `frontend` (`:5173`).
-- **Standalone Operator Console (Mock Mode, works before `backend/` lands):**
-  ```bash
-  cd frontend && npm ci && npm run dev
-  ```
-  Open **http://localhost:5173** (uses `VITE_USE_MOCKS=true` by default).
-
 ---
 
-## Makefile Targets
+## Grace Period, Witness & Clock-Skew Bounds
 
-| Target | Command / Behavior |
-|---|---|
-| `make` / `make help` | Default target; lists all Make targets |
-| `make codegen` | Generates ConnectRPC/Protobuf TypeScript (`frontend/src/gen/`) and Go bindings from `backend/proto/` |
-| `make build` | Builds production frontend (`frontend/dist/`) and Go binaries (`bin/`) when `backend/go.mod` exists |
-| `make test` | Runs `tsc --noEmit`, `eslint .`, `vitest run`, and `go test -race ./...` when `backend/go.mod` exists |
-| `make verify` | Runs `scripts/clean-machine-check.sh` and `scripts/verify.sh` |
-| `make bench` | Runs `scripts/bench.sh` for PQC latency, throughput, and detection evaluation metrics |
-| `make up` | Starts `certs-init`, `controlplane`, `node-a/b/c`, and `frontend` via `deployments/docker-compose.yml` |
-| `make down` | Stops and removes the Compose stack |
-| `make clean` | Removes `frontend/dist`, `frontend/coverage`, `bin`, and `coverage` |
-
----
-
-## Grace Period & Clock-Skew Bounds
-
-| Parameter | Env Variable | Default | Tested / Enforced Bound |
+| Parameter | Env Variable | Default | Behavior & Bounds |
 |---|---|---|---|
-| Key Rotation Grace Period | `URGUARD_ROTATION_GRACE_SEC` | `30` seconds | `IDLE → PREPARING → COMMITTED → CUTOFF_ENFORCED`; after cutoff, older epochs fail with `ERR_KEY_EPOCH_EXPIRED` |
-| Detector Clock-Skew Watermark | `URGUARD_MAX_CLOCK_SKEW_SEC` | `30` seconds (`±30s`) | Tested up to `±60s`; pairs separated by `< 2 * skew` are flagged `order_uncertain: true`; late events flagged `late_arrival: true` |
-| CRL Heartbeat Reconciliation | `URGUARD_CRL_HEARTBEAT_SEC` | `1` second | Backstop alongside gRPC server-streaming CRL push |
+| Key Rotation Grace Period | `URGUARD_ROTATION_GRACE_SEC` | `30` seconds | `IDLE -> PREPARING -> COMMITTED -> CUTOFF_ENFORCED`; in-flight transfers finish during grace; post-cutoff requests fail with `ERR_KEY_EPOCH_EXPIRED` |
+| Detector Clock-Skew Watermark | `URGUARD_MAX_CLOCK_SKEW_SEC` | `30` seconds (`±30s`) | Tested up to `±60s`; events within `< 2 * skew` are flagged `order_uncertain: true`; late arrivals flagged `late_arrival: true` |
+| CRL Heartbeat Reconciliation | `URGUARD_CRL_HEARTBEAT_MS` | `1000` ms | Reconciliation backstop alongside immediate gRPC server-streaming CRL pushes |
+| Audit Checkpoint Interval | `URGUARD_CHECKPOINT_INTERVAL` | `25` events | Periodic `ML-DSA-65` checkpoints; latest signed head is witnessed durably on `node-a` |
 
 ---
 
 ## Dependency Inventory (Zero AI/ML Policy)
 
-Automated enforcement: `bash scripts/check-no-ai-deps.sh` (runs in CI on every push and PR).
+Automated check: `bash scripts/check-no-ai-deps.sh` (enforced in CI).
 
-### Frontend Packages (`frontend/package.json`)
-
-**Runtime Dependencies:**
-
-| Package | Version | Purpose | License |
-|---|---|---|---|
-| `@bufbuild/protobuf` | `2.17.0` | Protobuf-ES v2 runtime and message helpers | `Apache-2.0 AND BSD-3-Clause` |
-| `@connectrpc/connect` | `2.3.0` | Type-safe ConnectRPC client core | `Apache-2.0` |
-| `@connectrpc/connect-web` | `2.3.0` | Browser Fetch transport for Connect / gRPC-Web | `Apache-2.0` |
-| `@xyflow/react` | `13.0.2` | Interactive identity-to-service access graph | `MIT` |
-| `react` | `19.3.1` | UI component runtime | `MIT` |
-| `react-dom` | `19.3.1` | DOM renderer | `MIT` |
-| `react-router` | `8.5.3` | Console client-side routing | `MIT` |
-
-**Development Dependencies:**
-
-| Package | Version | Purpose | License |
-|---|---|---|---|
-| `@bufbuild/buf` | `1.75.0` | Protobuf lint and codegen CLI | `Apache-2.0` |
-| `@bufbuild/protoc-gen-es` | `2.17.0` | Unified Protobuf-ES / Connect v2 code generator | `Apache-2.0` |
-| `@eslint/js` | `10.0.1` | Core ESLint JavaScript ruleset | `MIT` |
-| `@testing-library/jest-dom` | `8.0.0` | DOM assertion matchers for Vitest | `MIT` |
-| `@testing-library/react` | `16.3.3` | React component testing helpers | `MIT` |
-| `@types/react` | `19.3.1` | TypeScript declarations for React | `MIT` |
-| `@types/react-dom` | `19.3.0` | TypeScript declarations for React DOM | `MIT` |
-| `@vitejs/plugin-react` | `6.3.0` | React Fast Refresh and JSX Vite plugin | `MIT` |
-| `eslint` | `10.15.0` | Static code linter | `MIT` |
-| `eslint-config-prettier` | `10.1.8` | Disables ESLint formatting rules conflicting with Prettier | `MIT` |
-| `eslint-plugin-react-hooks` | `7.1.1` | React Hooks correctness checks | `MIT` |
-| `eslint-plugin-react-refresh` | `0.5.7` | Fast Refresh export validation | `MIT` |
-| `globals` | `17.14.0` | Standard browser global identifiers | `MIT` |
-| `jsdom` | `31.0.1` | Headless DOM environment for Vitest | `MIT` |
-| `prettier` | `3.10.1` | Code formatter | `MIT` |
-| `typescript` | `5.9.3` | Strict static type checker | `Apache-2.0` |
-| `typescript-eslint` | `8.74.0` | Type-aware ESLint parser and rules | `MIT` |
-| `vite` | `8.3.8` | Frontend bundler and dev server | `MIT` |
-| `vitest` | `5.1.2` | Unit and component test runner | `MIT` |
-
-### Go Modules (`backend/go.mod`)
-
-> **Note:** `backend/go.mod` is owned by Engineers A & B and is not yet merged on this branch. Populate exact pinned versions from `backend/go.mod` once merged:
+### Backend Go Modules (`backend/go.mod`)
 
 | Module | Version | Purpose | License |
 |---|---|---|---|
-| Go stdlib (`crypto/mlkem`, `crypto/tls`, `crypto/aes`, `crypto/cipher`) | `go1.24.2+` | Hybrid `X25519MLKEM768` TLS, `ML-KEM-768`, `AES-256-GCM` | `BSD-3-Clause` |
-| `github.com/cloudflare/circl` | `[TODO: from backend/go.mod]` | Standardized `ML-DSA-65` signatures & PQC primitives | `[TODO: verify go.mod]` |
-| `connectrpc.com/connect` | `[TODO: from backend/go.mod]` | ConnectRPC / gRPC-Web / HTTP handlers | `[TODO: verify go.mod]` |
-| `google.golang.org/grpc` | `[TODO: from backend/go.mod]` | Inter-node gRPC server-streaming | `[TODO: verify go.mod]` |
-| `google.golang.org/protobuf` | `[TODO: from backend/go.mod]` | Protobuf runtime | `[TODO: verify go.mod]` |
-| `golang.org/x/crypto` | `[TODO: from backend/go.mod]` | `HKDF-SHA256` & `Argon2id` KDF | `[TODO: verify go.mod]` |
-| `go.etcd.io/bbolt` / `modernc.org/sqlite` | `[TODO: from backend/go.mod]` | Crash-safe WAL key & audit persistence | `[TODO: verify go.mod]` |
+| Go stdlib (`crypto/mlkem`, `crypto/tls`, `crypto/aes`, `crypto/cipher`, `crypto/ecdh`, `crypto/hkdf`) | `go1.26.0` | `ML-KEM-768`, `X25519`, `HKDF-SHA256`, `AES-256-GCM`, hybrid TLS `X25519MLKEM768` | `BSD-3-Clause` |
+| `github.com/cloudflare/circl` | `v1.6.1` | Standardized NIST FIPS 204 `ML-DSA-65` digital signatures | `BSD-3-Clause` |
+| `connectrpc.com/connect` | `v1.18.1` | ConnectRPC / gRPC / HTTP handlers and streaming | `Apache-2.0` |
+| `go.etcd.io/bbolt` | `v1.4.0` | Pure-Go ACID WAL, key epoch, revocation, audit & witness persistence | `MIT` |
+| `golang.org/x/crypto` | `v0.44.0` | `Argon2id` backup KDF | `BSD-3-Clause` |
+| `golang.org/x/net` | `v0.46.0` | HTTP/2 (`h2c`) support for local testing | `BSD-3-Clause` |
+| `google.golang.org/protobuf` | `v1.36.6` | Deterministic Protobuf serialization & runtime | `BSD-3-Clause` |
+
+### Frontend Packages (`frontend/package.json`)
+
+**Runtime:** `@bufbuild/protobuf` (`2.17.0`), `@connectrpc/connect` (`2.3.0`), `@connectrpc/connect-web` (`2.3.0`), `@xyflow/react` (`13.0.2`), `react` (`19.3.1`), `react-dom` (`19.3.1`), `react-router` (`8.5.3`).  
+**Development:** `@bufbuild/buf` (`1.75.0`), `@bufbuild/protoc-gen-es` (`2.17.0`), `typescript` (`5.9.3`), `vite` (`8.3.8`), `vitest` (`5.1.2`), `eslint` (`10.15.0`), `prettier` (`3.10.1`), `@testing-library/react` (`16.3.3`), `@testing-library/jest-dom` (`8.0.0`), `jsdom` (`31.0.1`).
 
 ---
 
-## Track 4 Checklist Verifications (12 Objectives)
+## Verification & Evaluation Commands
 
-Run automated clean-machine & end-to-end checks via `make verify` (calls `scripts/clean-machine-check.sh` + `scripts/verify.sh` once Engineer A adds it), or demonstrate each objective in the Operator Console:
+### Backend Full Verification (Build, Vet, Race Tests, Subprocess Crash & Benchmarks)
+- **Windows (PowerShell):**
+  ```powershell
+  .\scripts\verify_backend.ps1
+  ```
+- **Linux / macOS:**
+  ```bash
+  sh scripts/verify_backend.sh
+  ```
+  Covers unit tests (`pkg/pqc`, `pkg/store`, `pkg/auditlog`, `pkg/protocol`, `detector`, `internal/config`, `internal/controlplane`, `internal/node`), 3-relay + witness integration (`TestThreeRelayLifecycle`), subprocess `SIGKILL` crash & rollback tests (`TestSubprocessCrashRecoveryAndRollback`), and `pkg/pqc` benchmarks.
 
-| # | Objective | How to Verify (UI Route / Automated Script) |
+### Detector Evaluation & PQC CLI Benchmarks
+```bash
+cd backend
+go run ./cmd/detector-eval -json
+go run ./cmd/urguard-cli bench
+```
+
+### Frontend Checks & Build
+```bash
+cd frontend
+npm run typecheck && npm run lint && npm test && npm run build
+```
+
+---
+
+## Track 4 Checklist Mapping
+
+| # | Objective | Verified Behavior |
 |---|---|---|
-| 1 | **Key Rotation & Grace Period** | **Key Governance (`/governance`)** → Click **Rotate key** (`IDLE → PREPARING → COMMITTED`, `30s` countdown) → wait or click **Enforce cutoff now** (`CUTOFF_ENFORCED`; old epoch returns `ERR_KEY_EPOCH_EXPIRED`) |
-| 2 | **Revocation & Re-Enrollment** | **Key Governance (`/governance`)** → **Revoke device** → inspect staggered acks (`node-a/b/c`) and `revocation_propagation_ms` → **Re-enroll device** (`device_new` holds DEK, `device_old` excluded) |
-| 3 | **Crash Recovery (`SIGKILL`)** | Automated via `make verify` (`scripts/verify.sh` — `[TODO: confirm CLI subcommand from Engineer A]`) |
-| 4 | **Backup Integrity** | **Key Governance (`/governance`)** → **Export Backup** → **Tamper 1 byte** → **Restore Backup** (`ERR_BACKUP_CORRUPTED`, live keys unchanged) |
-| 5 | **Audit Log & Injection Defense** | **Audit Log (`/audit`)** → submit pre-filled `\n{"actor":"admin","action":"GRANT_ROOT"}` → **Verify Chain** (`CHAIN VALID`) → **Simulate DB Tamper** → **Verify Chain** (`CHAIN BROKEN at seq N`) |
-| 6 | **Routine vs. Suspicious Metrics** | **Detection (`/detection`)** KPI cards (`Precision`, `Recall`, `F1`, `median_time_to_alert_ms`, `false_alerts_per_1k_benign`) and `make bench` |
-| 7 | **Lateral Movement Detection** | **Detection (`/detection`)** → inspect flagged `edge-gateway → dev-service → secrets-vault` edges in `@xyflow/react` graph and `alrt-102` drawer |
-| 8 | **Clock Skew & Out-of-Order Events** | **Detection (`/detection`)** → inspect `order_uncertain: true` badge and listed `possibleOrderings` in the alert drawer |
-| 9 | **Replay & Recipient Binding** | **Messaging (`/`)** → click **Replay captured envelope** (`ERR_REPLAY_DETECTED`) and **Tamper recipient_id** (`ERR_RECIPIENT_MISMATCH`) |
-| 10 | **Forward Secrecy** | **Messaging (`/`)** → inspect `SK_ephem: ZEROIZED` badge on completed transfers + backend unit tests (`make test`) |
-| 11 | **Delivery Under Loss / Reordering** | **Messaging (`/`)** → click **Reorder chunks `[2,0,3,1]`** (`DELIVERED`) and **Drop chunk 1 of `[0,1,2]`** (`DELIVERY_FAILED`, plaintext withheld) |
-| 12 | **Session Resumption Binding** | **Messaging (`/`)** → click **Resume session as different identity** (`ERR_SESSION_IDENTITY_MISMATCH` + `SESSION_HIJACK_ATTEMPT` alert) |
+| 1 | **Key Rotation & Grace Period** | Two-phase WAL rotation (`PREPARING -> COMMITTED -> CUTOFF_ENFORCED`), in-flight transfers survive `30s` grace, post-cutoff requests fail with `ERR_KEY_EPOCH_EXPIRED` across all 3 nodes |
+| 2 | **Revocation Across Nodes** | gRPC server-streaming CRL push + `AckControlUpdate` enforcement across 3 nodes (`revocation_propagation_ms` reported); device re-enrollment rewraps DEKs while collaborators retain access |
+| 3 | **Crash Recovery** | Subprocess kill during `PREPARING` rolls back uncommitted epoch on restart; committed keys stay active and revoked devices stay revoked |
+| 4 | **Backup Integrity** | `ExportBackup` / `RestoreBackup` protects snapshots with Argon2id + `AES-256-GCM` + SHA-256 manifest + `ML-DSA-65` signature; tampering fails with `ERR_BACKUP_CORRUPTED` and logs `BACKUP_INTEGRITY_FAILURE` |
+| 5 | **Log Integrity** | Canonical JSON isolates `user_text` against injection; SHA-256 hash chain + `ML-DSA-65` checkpoints + live `node-a` witness detect edits, missing/reordered records, and DB rollbacks |
+| 6 | **Routine vs. Suspicious** | Explainable rule + EWMA statistical classifier (`backend/detector`) achieves `F1=1.0000`, `200.00 ms` median alert latency, `0.00` false alerts / 1k benign events on `detector/testdata/events.csv` |
+| 7 | **Lateral Movement** | Directed identity-to-service access graph flags multi-hop pivots and disjoint concurrent sessions with `identity`, `services[]`, `event_ids[]`, and `path_or_rule` |
+| 8 | **Clock Differences** | Watermark buffer supports `±30s` (tested to `±60s`), flags `late_arrival` and `order_uncertain` pairs with `possible_orderings` |
+| 9 | **Replay & Recipient Binding** | AEAD AAD + `ML-DSA-65` signatures enforce `ERR_RECIPIENT_MISMATCH`; 64-message sliding replay window enforces `ERR_REPLAY_DETECTED` |
+| 10 | **Forward Secrecy** | Ephemeral `X25519 + ML-KEM-768` per-session keys are zeroized on close; exposing long-term `ML-DSA-65` identity seeds cannot decrypt past captures |
+| 11 | **Delivery Under Loss / Reorder** | Out-of-order chunks (`[2, 0, 3, 1]`) reassemble intact; missing/corrupted chunks discard buffered plaintext (`DELIVERY_FAILED`) |
+| 12 | **Session Resumption** | Encrypted server `ResumptionTicket` + single-use challenge-response bound to peer `ML-DSA-65` identity (`ERR_SESSION_IDENTITY_MISMATCH` on mismatch) |
 
 ---
 
-## Evaluation & Benchmark Output Location
-
-- Automated benchmark and evaluation output location: `[TODO: confirm exact output path written by Engineer A/B scripts/bench.sh — e.g., reports/metrics.json and reports/eval_summary.json]`.
-- Run `make bench` to regenerate benchmark metrics once `scripts/bench.sh` is merged.
+## Known Limits
+- **Nginx Reverse Proxy TLS Group:** `nginx:1.27.4-alpine` OpenSSL connects to `controlplane` over TLS 1.3 mTLS using `X25519` fallback, while all Go-to-Go internal control and relay links negotiate hybrid `X25519MLKEM768`.
+- **Witness & Pin Trust Assumptions:** Rollback detection requires storing the `node-a` witness database outside the control plane's restore path and distributing `authority.pub` via a trusted channel.
+- **Synthetic Evaluation Scope:** Detector accuracy metrics (`F1=1.0000`, `0` false positives) are measured on the Track 4 practice dataset and synthetic 1k-event benchmark, not production telemetry.
 
 ---
 
 ## Documentation Deliverables
-
 - **1-Page Threat Model:** [docs/threat-model.md](docs/threat-model.md)
-- **2-Page Printable Project Brief (A4):** [docs/project-brief.html](docs/project-brief.html) *(open in Chrome/Edge → Print → Save as PDF with Background Graphics enabled)*
+- **2-Page Printable Project Brief (A4):** [docs/project-brief.html](docs/project-brief.html) *(print/export to PDF with Background Graphics enabled; embed your 5-minute demo video link)*
 - **5-Minute Demo Walkthrough:** [docs/demo-script.md](docs/demo-script.md)
-
----
-
-## Troubleshooting
-
-- **Port `5173` already in use:** Stop any running Vite server or `docker run -p 5173:80 ...` container (`docker ps --filter publish=5173`), or run `npm --prefix frontend run dev -- --port 5174`.
-- **`open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified`:** Start **Docker Desktop** and wait until the Linux engine status shows **Engine running**.
-- **`make` fails in PowerShell (`-d was unexpected` or `bash` exits 1):** Run `make` from **Git Bash** (not PowerShell or `cmd.exe`).
-- **`make up` fails on `COPY backend/go.mod`:** `backend/` from Engineers A & B is not yet merged on the current branch; run standalone UI preview via `npm --prefix frontend run dev` or `docker build -f deployments/frontend.Dockerfile --build-arg VITE_USE_MOCKS=true -t urguard-frontend:local .`.
