@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/urguard/backend/detector"
+	"github.com/dean-2/urGuard/backend/detector"
 )
 
 func main() {

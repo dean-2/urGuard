@@ -21,7 +21,10 @@ import (
 type principalKey struct{}
 
 func Principal(ctx context.Context) string { p, _ := ctx.Value(principalKey{}).(string); return p }
-func loopback(host string) bool            { return host == "localhost" || net.ParseIP(host).IsLoopback() }
+func WithPrincipal(ctx context.Context, principal string) context.Context {
+	return context.WithValue(ctx, principalKey{}, principal)
+}
+func loopback(host string) bool { return host == "localhost" || net.ParseIP(host).IsLoopback() }
 
 type bearer struct {
 	base  http.RoundTripper
@@ -84,6 +87,10 @@ func New(c config.Config, principal string) (*HTTP, error) {
 // Authenticate binds the verified transport identity to each RPC context.
 func (h *HTTP) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet && r.URL.Path == "/healthz" {
+			next.ServeHTTP(w, r)
+			return
+		}
 		p := ""
 		if h.serverTLS != nil {
 			if r.TLS != nil && len(r.TLS.VerifiedChains) > 0 {
@@ -118,6 +125,7 @@ func (h *HTTP) Serve(ctx context.Context, addr string, mux http.Handler) error {
 		protocols.SetHTTP1(true)
 	} else {
 		protocols.SetHTTP2(true)
+		protocols.SetHTTP1(true)
 	}
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {

@@ -467,3 +467,43 @@ func (l *Log) verifyChain(witness *checkpoint) (Verification, error) {
 	})
 	return report, err
 }
+
+// TamperEventForDemo intentionally mutates a stored event's canonical body
+// without updating its hash so interactive chain verification can detect it.
+func (l *Log) TamperEventForDemo(seq uint64) (Record, error) {
+	if seq == 0 {
+		return Record{}, errors.New("sequence must be >= 1")
+	}
+	var updated Record
+	err := l.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(eventsBucket))
+		if b == nil {
+			return errors.New("missing audit events")
+		}
+		raw := b.Get(seqKey(seq))
+		if raw == nil {
+			return fmt.Errorf("audit event %d not found", seq)
+		}
+		var rec Record
+		if err := json.Unmarshal(raw, &rec); err != nil {
+			return err
+		}
+		var e Event
+		if err := json.Unmarshal(rec.CanonicalBody, &e); err != nil {
+			return err
+		}
+		e.UserText = "[TAMPERED_IN_DB] " + e.UserText
+		body, err := canonical(e)
+		if err != nil {
+			return err
+		}
+		rec.CanonicalBody = body
+		out, err := json.Marshal(rec)
+		if err != nil {
+			return err
+		}
+		updated = rec
+		return b.Put(seqKey(seq), out)
+	})
+	return updated, err
+}

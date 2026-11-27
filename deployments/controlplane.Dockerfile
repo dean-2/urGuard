@@ -1,4 +1,4 @@
-FROM golang:1.24.2-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 WORKDIR /src
 
@@ -8,8 +8,8 @@ RUN go mod download
 COPY backend/ ./
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/controlplane ./cmd/controlplane
 
-# Build minimal static HTTP health probe so distroless runtime needs no shell or wget.
-RUN printf 'package main\nimport ("net/http";"os";"time")\nfunc main() { c := &http.Client{Timeout: 2 * time.Second}; r, e := c.Get(os.Args[1]); if e != nil || r.StatusCode >= 400 { os.Exit(1) } }\n' > /tmp/healthcheck.go && \
+# Build minimal static HTTP/HTTPS(mTLS) health probe so distroless runtime needs no shell or wget.
+RUN printf 'package main\nimport ("crypto/tls";"crypto/x509";"net/http";"os";"strings";"time")\nfunc main() {\n  u := os.Args[1]\n  tr := &http.Transport{}\n  if strings.HasPrefix(u, "https://") {\n    tc := &tls.Config{MinVersion: tls.VersionTLS13}\n    if ca, err := os.ReadFile(os.Getenv("URGUARD_TLS_CA_FILE")); err == nil {\n      pool := x509.NewCertPool(); pool.AppendCertsFromPEM(ca); tc.RootCAs = pool\n    }\n    if cert, err := tls.LoadX509KeyPair(os.Getenv("URGUARD_TLS_CERT_FILE"), os.Getenv("URGUARD_TLS_KEY_FILE")); err == nil {\n      tc.Certificates = []tls.Certificate{cert}\n    }\n    tr.TLSClientConfig = tc\n  }\n  c := &http.Client{Timeout: 3 * time.Second, Transport: tr}\n  r, e := c.Get(u); if e != nil || r.StatusCode >= 400 { os.Exit(1) }\n}\n' > /tmp/healthcheck.go && \
     CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/healthcheck /tmp/healthcheck.go
 
 FROM gcr.io/distroless/static-debian12:nonroot
@@ -19,10 +19,11 @@ WORKDIR /app
 
 COPY --from=builder /out/controlplane /usr/local/bin/controlplane
 COPY --from=builder /out/healthcheck /usr/local/bin/healthcheck
+COPY backend/detector/testdata /app/testdata
 
 EXPOSE 8080
 
-HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=5 \
-  CMD ["/usr/local/bin/healthcheck", "http://127.0.0.1:8080/healthz"]
+HEALTHCHECK --interval=10s --timeout=3s --start-period=15s --retries=5 \
+  CMD ["/usr/local/bin/healthcheck", "https://localhost:8080/healthz"]
 
 ENTRYPOINT ["/usr/local/bin/controlplane"]

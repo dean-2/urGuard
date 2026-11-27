@@ -1,5 +1,11 @@
-import { ConnectError, Code, type Transport } from '@connectrpc/connect';
+import { createClient, type Transport } from '@connectrpc/connect';
 import { createConnectTransport } from '@connectrpc/connect-web';
+import {
+  CryptoControlService,
+} from '../gen/urguard/v1/crypto_control_pb.ts';
+import {
+  TelemetryService,
+} from '../gen/urguard/v1/telemetry_pb.ts';
 import type {
   AccessGraph,
   AuditRecord,
@@ -98,78 +104,333 @@ export function resolveClientConfig(env: ClientEnv = import.meta.env): ClientCon
   return { useMocks, baseUrl };
 }
 
-function unimplementedConnectRpc(methodName: string, baseUrl: string): Promise<never> {
-  return Promise.reject(
-    new ConnectError(
-      `Live ConnectRPC method "${methodName}" requires generated Protobuf bindings from backend/proto/. Run "npm run codegen" once .proto contracts are present (target: ${baseUrl}).`,
-      Code.Unimplemented,
-    ),
-  );
-}
-
-function unimplementedStream(
-  methodName: string,
-  baseUrl: string,
-  onError?: (err: Error) => void,
-): UnsubscribeFn {
-  const err = new ConnectError(
-    `Live ConnectRPC stream "${methodName}" requires generated Protobuf bindings from backend/proto/. Run "npm run codegen" once .proto contracts are present (target: ${baseUrl}).`,
-    Code.Unimplemented,
-  );
-  onError?.(err);
-  return () => undefined;
-}
-
 export interface LiveUrGuardClient extends UrGuardClient {
   readonly transport: Transport;
 }
 
+interface DetectionSnapshotPayload {
+  readonly graph: AccessGraph;
+  readonly alerts: readonly SecurityAlert[];
+  readonly metrics: DetectionMetrics;
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function protoTimestampToIso(ts?: { readonly seconds: bigint; readonly nanos: number }): string {
+  if (!ts) return new Date().toISOString();
+  const ms = Number(ts.seconds) * 1000 + Math.floor(ts.nanos / 1_000_000);
+  return new Date(ms).toISOString();
+}
+
+function startPollingSubscription<T>(
+  loader: () => Promise<T>,
+  handlers: StreamHandlers<T>,
+  intervalMs = 2000,
+): UnsubscribeFn {
+  let cancelled = false;
+  let timer: ReturnType<typeof setInterval> | null = null;
+
+  const poll = async () => {
+    try {
+      const value = await loader();
+      if (!cancelled) {
+        handlers.onData(value);
+      }
+    } catch (err) {
+      if (!cancelled) {
+        handlers.onError?.(err instanceof Error ? err : new Error(String(err)));
+      }
+    }
+  };
+
+  void poll();
+  timer = setInterval(() => {
+    void poll();
+  }, intervalMs);
+
+  return () => {
+    cancelled = true;
+    if (timer !== null) {
+      clearInterval(timer);
+      timer = null;
+    }
+    handlers.onComplete?.();
+  };
+}
+
 /**
- * Live ConnectRPC client shell configured with @connectrpc/connect-web transport.
- * Once Engineer A adds backend/proto/*.proto and codegen runs, methods delegate to
- * createClient(Service, transport).
+ * Live ConnectRPC + Console bridge client communicating with the Go control plane
+ * via generated Protobuf/ConnectRPC descriptors and Nginx mTLS proxy routes.
  */
 export function createConnectUrGuardClient(baseUrl: string): LiveUrGuardClient {
+  const normalizedBase = baseUrl.replace(/\/+$/, '');
   const transport: Transport = createConnectTransport({
-    baseUrl,
+    baseUrl: normalizedBase,
   });
+
+  const controlRpc = createClient(CryptoControlService, transport);
+  const telemetryRpc = createClient(TelemetryService, transport);
+  const decoder = new TextDecoder();
+
+  async function consoleFetch<T>(path: string, init?: RequestInit): Promise<T> {
+    const headers = new Headers(init?.headers);
+    if (!headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
+    }
+    const res = await fetch(`${normalizedBase}/console/v1/${path}`, {
+      ...init,
+      headers,
+    });
+    const text = await res.text();
+    let parsed: unknown = null;
+    if (text.length > 0) {
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        parsed = null;
+      }
+    }
+    if (!res.ok) {
+      const errMsg =
+        parsed && typeof parsed === 'object' && 'error' in parsed && typeof parsed.error === 'string'
+          ? parsed.error
+          : `Request failed (${String(res.status)}): ${text}`;
+      throw new Error(errMsg);
+    }
+    return parsed as T;
+  }
+
+  async function getSystemHealth(): Promise<SystemHealth> {
+    return consoleFetch<SystemHealth>('health');
+  }
+
+  async function getRotationState(): Promise<RotationState> {
+    const health = await getSystemHealth();
+    return health.rotation;
+  }
+
+  async function listAuditLogs(): Promise<readonly AuditRecord[]> {
+    const res = await telemetryRpc.listAuditEvents({ fromSeq: 1n, limit: 200 });
+    return res.events.map((ev): AuditRecord => {
+      const canonicalBody = decoder.decode(ev.canonicalBody);
+      const metadata: Record<string, string> = ev.userText ? { user_text: ev.userText } : {};
+      return {
+        seq: Number(ev.seq),
+        prevHash: bytesToHex(ev.prevHash),
+        entryHash: bytesToHex(ev.entryHash),
+        timestamp: protoTimestampToIso(ev.timestamp),
+        actorId: ev.actorId,
+        action: ev.action,
+        targetService: 'controlplane',
+        sourceNode: 'controlplane',
+        payload: {
+          metadata,
+        },
+        canonicalBody,
+      };
+    });
+  }
+
+  async function fetchDetectionSnapshot(): Promise<DetectionSnapshotPayload> {
+    return consoleFetch<DetectionSnapshotPayload>('detection/snapshot');
+  }
 
   return {
     mode: 'live',
-    baseUrl,
+    baseUrl: normalizedBase,
     transport,
-    getSystemHealth: () => unimplementedConnectRpc('getSystemHealth', baseUrl),
-    subscribeSystemHealth: (handlers) =>
-      unimplementedStream('subscribeSystemHealth', baseUrl, handlers.onError),
-    getRotationState: () => unimplementedConnectRpc('getRotationState', baseUrl),
-    prepareRotation: () => unimplementedConnectRpc('prepareRotation', baseUrl),
-    triggerRotation: () => unimplementedConnectRpc('triggerRotation', baseUrl),
-    enforceRotationCutoff: () => unimplementedConnectRpc('enforceRotationCutoff', baseUrl),
-    listDevices: () => unimplementedConnectRpc('listDevices', baseUrl),
-    listCrl: () => unimplementedConnectRpc('listCrl', baseUrl),
-    revokeDevice: () => unimplementedConnectRpc('revokeDevice', baseUrl),
-    subscribeRevocationAcks: (_crlEpoch, handlers) =>
-      unimplementedStream('subscribeRevocationAcks', baseUrl, handlers.onError),
-    reEnrollDevice: () => unimplementedConnectRpc('reEnrollDevice', baseUrl),
-    exportBackup: () => unimplementedConnectRpc('exportBackup', baseUrl),
-    restoreBackup: () => unimplementedConnectRpc('restoreBackup', baseUrl),
-    sendE2EMessage: () => unimplementedConnectRpc('sendE2EMessage', baseUrl),
-    listMessages: () => unimplementedConnectRpc('listMessages', baseUrl),
-    replayMessage: () => unimplementedConnectRpc('replayMessage', baseUrl),
-    tamperRecipient: () => unimplementedConnectRpc('tamperRecipient', baseUrl),
-    issueResumptionTicket: () => unimplementedConnectRpc('issueResumptionTicket', baseUrl),
-    resumeSession: () => unimplementedConnectRpc('resumeSession', baseUrl),
-    listAuditLogs: () => unimplementedConnectRpc('listAuditLogs', baseUrl),
-    subscribeAuditLogs: (handlers) =>
-      unimplementedStream('subscribeAuditLogs', baseUrl, handlers.onError),
-    appendUserAuditTest: () => unimplementedConnectRpc('appendUserAuditTest', baseUrl),
-    tamperAuditRecord: () => unimplementedConnectRpc('tamperAuditRecord', baseUrl),
-    verifyLogChain: () => unimplementedConnectRpc('verifyLogChain', baseUrl),
-    listAlerts: () => unimplementedConnectRpc('listAlerts', baseUrl),
-    subscribeAlerts: (handlers) =>
-      unimplementedStream('subscribeAlerts', baseUrl, handlers.onError),
-    getAccessGraph: () => unimplementedConnectRpc('getAccessGraph', baseUrl),
-    getMetrics: () => unimplementedConnectRpc('getMetrics', baseUrl),
+
+    getSystemHealth,
+
+    subscribeSystemHealth(handlers) {
+      return startPollingSubscription(getSystemHealth, handlers, 2500);
+    },
+
+    getRotationState,
+
+    async prepareRotation() {
+      const current = await controlRpc.getEpochState({});
+      const active = current.state?.activeEpoch ?? 1n;
+      await controlRpc.prepareRotation({ expectedActiveEpoch: active });
+      return getRotationState();
+    },
+
+    async triggerRotation() {
+      const current = await controlRpc.getEpochState({});
+      const prepared = current.state?.preparedEpoch ?? 0n;
+      if (prepared === 0n) {
+        const active = current.state?.activeEpoch ?? 1n;
+        const prepRes = await controlRpc.prepareRotation({ expectedActiveEpoch: active });
+        await controlRpc.commitRotation({ preparedEpoch: prepRes.state?.preparedEpoch ?? active + 1n });
+      } else {
+        await controlRpc.commitRotation({ preparedEpoch: prepared });
+      }
+      return getRotationState();
+    },
+
+    async enforceRotationCutoff() {
+      return consoleFetch<RotationState>('rotation/cutoff', { method: 'POST', body: '{}' });
+    },
+
+    async listDevices() {
+      return consoleFetch<readonly DeviceRecord[]>('devices');
+    },
+
+    async listCrl() {
+      return consoleFetch<readonly CrlEntry[]>('crl');
+    },
+
+    async revokeDevice(deviceId, reason) {
+      const res = await controlRpc.revokeDevice({ deviceId, reason });
+      const epoch = res.revocation?.crlEpoch ?? 1n;
+      return consoleFetch<RevocationResult>(`revocation/status?crl_epoch=${String(epoch)}`);
+    },
+
+    subscribeRevocationAcks(crlEpoch, handlers) {
+      const seen = new Set<string>();
+      return startPollingSubscription(
+        async () => {
+          const status = await consoleFetch<RevocationResult>(
+            `revocation/status?crl_epoch=${String(crlEpoch)}`,
+          );
+          return status.nodeAcks;
+        },
+        {
+          onData: (acks) => {
+            acks.forEach((ack) => {
+              if (ack.enforced && !seen.has(ack.nodeId)) {
+                seen.add(ack.nodeId);
+                handlers.onData(ack);
+              }
+            });
+          },
+          onError: handlers.onError,
+          onComplete: handlers.onComplete,
+        },
+        600,
+      );
+    },
+
+    async reEnrollDevice(revokedDeviceId, newDeviceId, ownerId) {
+      return consoleFetch<ReEnrollResult>('devices/reenroll', {
+        method: 'POST',
+        body: JSON.stringify({ revokedDeviceId, newDeviceId, ownerId }),
+      });
+    },
+
+    async exportBackup() {
+      return consoleFetch<BackupBundle>('backups/export', { method: 'POST', body: '{}' });
+    },
+
+    async restoreBackup(bundle) {
+      return consoleFetch<BackupRestoreResult>('backups/restore', {
+        method: 'POST',
+        body: JSON.stringify(bundle),
+      });
+    },
+
+    async sendE2EMessage(input: SendE2EMessageInput) {
+      return consoleFetch<E2EMessageRecord>('messages/send', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      });
+    },
+
+    async listMessages() {
+      return consoleFetch<readonly E2EMessageRecord[]>('messages');
+    },
+
+    async replayMessage(transferId) {
+      return consoleFetch<E2EMessageRecord>('messages/replay', {
+        method: 'POST',
+        body: JSON.stringify({ transferId }),
+      });
+    },
+
+    async tamperRecipient(transferId, forgedRecipientId) {
+      return consoleFetch<E2EMessageRecord>('messages/tamper-recipient', {
+        method: 'POST',
+        body: JSON.stringify({ transferId, forgedRecipientId }),
+      });
+    },
+
+    async issueResumptionTicket(identity) {
+      return consoleFetch<ResumptionTicket>('resumption/ticket', {
+        method: 'POST',
+        body: JSON.stringify({ identity }),
+      });
+    },
+
+    async resumeSession(ticket, presenterIdentity) {
+      return consoleFetch<SessionResumptionResult>('resumption/resume', {
+        method: 'POST',
+        body: JSON.stringify({ ticket, presenterIdentity }),
+      });
+    },
+
+    listAuditLogs,
+
+    subscribeAuditLogs(handlers) {
+      return startPollingSubscription(listAuditLogs, handlers, 2000);
+    },
+
+    async appendUserAuditTest(actorId, userMetadataText) {
+      return consoleFetch<AuditRecord>('audit/test-event', {
+        method: 'POST',
+        body: JSON.stringify({ actorId, userMetadataText }),
+      });
+    },
+
+    async tamperAuditRecord(seq) {
+      return consoleFetch<AuditRecord>('audit/tamper', {
+        method: 'POST',
+        body: JSON.stringify({ seq }),
+      });
+    },
+
+    async verifyLogChain(tamperSeq) {
+      if (tamperSeq !== undefined) {
+        await consoleFetch<AuditRecord>('audit/tamper', {
+          method: 'POST',
+          body: JSON.stringify({ seq: tamperSeq }),
+        });
+      }
+      const res = await telemetryRpc.verifyAuditChain({});
+      return {
+        valid: res.valid,
+        totalRecords: Number(res.checkedEvents),
+        lastVerifiedSeq: Number(res.checkedEvents),
+        brokenSeq: res.brokenSeq !== undefined ? Number(res.brokenSeq) : null,
+        reason: res.reason || null,
+        verifiedAt: new Date().toISOString(),
+        checkpointVerified: res.checkedCheckpoints > 0 || res.valid,
+      };
+    },
+
+    async listAlerts() {
+      const snap = await fetchDetectionSnapshot();
+      return snap.alerts;
+    },
+
+    subscribeAlerts(handlers) {
+      return startPollingSubscription(
+        async () => (await fetchDetectionSnapshot()).alerts,
+        handlers,
+        2500,
+      );
+    },
+
+    async getAccessGraph() {
+      const snap = await fetchDetectionSnapshot();
+      return snap.graph;
+    },
+
+    async getMetrics() {
+      const snap = await fetchDetectionSnapshot();
+      return snap.metrics;
+    },
   };
 }
 

@@ -23,13 +23,15 @@ import (
 
 type Service struct {
 	AccessDetector
-	cfg     config.Config
-	store   *store.Store
-	log     *auditlog.Log
-	witness rpc.AuditWitnessServiceClient
-	mu      sync.Mutex
-	notify  chan struct{}
-	auditMu sync.Mutex
+	cfg       config.Config
+	store     *store.Store
+	log       *auditlog.Log
+	witness   rpc.AuditWitnessServiceClient
+	mu        sync.Mutex
+	notify    chan struct{}
+	auditMu   sync.Mutex
+	console   *ConsoleBridge
+	httpCli   *http.Client
 }
 
 // New takes an already-open store; the caller owns its lifetime.
@@ -133,14 +135,30 @@ func (s *Service) RetryPending(ctx context.Context) {
 	}
 }
 func (s *Service) auditHook(ctx context.Context, action, detail string) store.CommitHook {
-	event := auditlog.Event{ActorID: transport.Principal(ctx), Action: action, UserText: detail}
-	return func(tx *bolt.Tx) error { _, _, err := s.log.AppendInTx(tx, event); return err }
+	actor := transport.Principal(ctx)
+	at := time.Now().UTC()
+	event := auditlog.Event{ActorID: actor, Action: action, UserText: detail, Timestamp: at}
+	return func(tx *bolt.Tx) error {
+		row, _, err := s.log.AppendInTx(tx, event)
+		if err != nil {
+			return err
+		}
+		if obs, ok := s.AccessDetector.(auditObserver); ok {
+			obs.ObserveAuditEvent(row.Seq, actor, action, detail, at)
+		}
+		return nil
+	}
 }
 
 func (s *Service) audit(ctx context.Context, action, detail string) error {
-	_, _, err := s.log.AppendWithCheckpoint(auditlog.Event{ActorID: transport.Principal(ctx), Action: action, UserText: detail})
+	actor := transport.Principal(ctx)
+	at := time.Now().UTC()
+	row, _, err := s.log.AppendWithCheckpoint(auditlog.Event{ActorID: actor, Action: action, UserText: detail, Timestamp: at})
 	if err != nil {
 		return err
+	}
+	if obs, ok := s.AccessDetector.(auditObserver); ok {
+		obs.ObserveAuditEvent(row.Seq, actor, action, detail, at)
 	}
 	return s.confirm(ctx)
 }
@@ -157,6 +175,12 @@ func (s *Service) confirm(ctx context.Context) error {
 func (s *Service) Mount(m *http.ServeMux) {
 	m.Handle(rpc.NewCryptoControlServiceHandler(s))
 	m.Handle(rpc.NewTelemetryServiceHandler(s))
+	s.mountConsole(m)
+}
+
+// SetHTTPClient supplies the authenticated cluster HTTP client used for live console health probes.
+func (s *Service) SetHTTPClient(cli *http.Client) {
+	s.httpCli = cli
 }
 func forbidden() error {
 	return connect.NewError(connect.CodePermissionDenied, errors.New("principal not authorized"))

@@ -9,7 +9,15 @@ services:
     volumes:
       - ./gen-certs.sh:/scripts/gen-certs.sh:ro
       - urguard-certs:/certs
-    command: ["sh", "-c", "apk add --no-cache bash openssl >/dev/null && bash /scripts/gen-certs.sh"]
+      - urguard-shared:/shared
+      - controlplane-data:/data/cp
+      - node-a-data:/data/na
+      - node-b-data:/data/nb
+      - node-c-data:/data/nc
+    command:
+      - sh
+      - -c
+      - "apk add --no-cache bash openssl >/dev/null && bash /scripts/gen-certs.sh && chown -R 65532:65532 /shared /data/cp /data/na /data/nb /data/nc"
     restart: "no"
 
   controlplane:
@@ -20,31 +28,40 @@ services:
       - path: ../.env
         required: false
     environment:
-      URGUARD_ROLE: controlplane
-      URGUARD_LISTEN_ADDR: ":8080"
+      URGUARD_CP_ADDR: "0.0.0.0:8080"
+      URGUARD_CP_DB_PATH: /var/lib/urguard/data/controlplane.bbolt
+      URGUARD_CP_GRPC_TLS: "${URGUARD_CP_GRPC_TLS:-true}"
+      URGUARD_TLS_CA_FILE: /var/lib/urguard/certs/ca.crt
+      URGUARD_TLS_CERT_FILE: /var/lib/urguard/certs/controlplane.crt
+      URGUARD_TLS_KEY_FILE: /var/lib/urguard/certs/controlplane.key
+      URGUARD_AUTHORITY_PUBLIC_FILE: /var/lib/urguard/shared/authority.pub
+      URGUARD_CONTROLPLANE_URL: https://controlplane:8080
+      URGUARD_WITNESS_URL: https://node-a:8081
+      URGUARD_NODE_URLS: https://node-a:8081,https://node-b:8081,https://node-c:8081
+      URGUARD_REQUIRED_NODES: node-a,node-b,node-c
       URGUARD_ROTATION_GRACE_SEC: "${URGUARD_ROTATION_GRACE_SEC:-30}"
       URGUARD_MAX_CLOCK_SKEW_SEC: "${URGUARD_MAX_CLOCK_SKEW_SEC:-30}"
-      URGUARD_CRL_HEARTBEAT_SEC: "${URGUARD_CRL_HEARTBEAT_SEC:-1}"
-      URGUARD_LOG_CHECKPOINT_INTERVAL: "${URGUARD_LOG_CHECKPOINT_INTERVAL:-50}"
-      URGUARD_TLS_MODE: "${URGUARD_TLS_MODE:-pqc-mtls}"
-      URGUARD_DATA_DIR: /var/lib/urguard/data
-      URGUARD_RUNTIME_CERT_DIR: /var/lib/urguard/certs
+      URGUARD_CRL_HEARTBEAT_MS: "${URGUARD_CRL_HEARTBEAT_MS:-1000}"
+      URGUARD_CHECKPOINT_INTERVAL: "${URGUARD_CHECKPOINT_INTERVAL:-25}"
+      URGUARD_DETECTOR_DATA_DIR: /app/testdata
+      URGUARD_BACKUP_PASSPHRASE: "${URGUARD_BACKUP_PASSPHRASE:-}"
     ports:
       - "${URGUARD_CONTROLPLANE_PORT:-8080}:8080"
     volumes:
       - controlplane-data:/var/lib/urguard/data
       - urguard-certs:/var/lib/urguard/certs:ro
+      - urguard-shared:/var/lib/urguard/shared
     depends_on:
       certs-init:
         condition: service_completed_successfully
     networks:
       - urguard-net
     healthcheck:
-      test: ["CMD", "/usr/local/bin/healthcheck", "http://127.0.0.1:8080/healthz"]
+      test: ["CMD", "/usr/local/bin/healthcheck", "https://localhost:8080/healthz"]
       interval: 10s
       timeout: 3s
-      retries: 5
-      start_period: 10s
+      retries: 6
+      start_period: 15s
 
   node-a:
     build:
@@ -55,30 +72,38 @@ services:
         required: false
     environment:
       URGUARD_NODE_ID: node-a
-      URGUARD_LISTEN_ADDR: ":8081"
+      URGUARD_NODE_ADDR: "0.0.0.0:8081"
+      URGUARD_NODE_DB_PATH: /var/lib/urguard/data/node.bbolt
+      URGUARD_WITNESS_DB_PATH: /var/lib/urguard/data/witness.bbolt
+      URGUARD_CP_GRPC_TLS: "${URGUARD_CP_GRPC_TLS:-true}"
+      URGUARD_TLS_CA_FILE: /var/lib/urguard/certs/ca.crt
+      URGUARD_TLS_CERT_FILE: /var/lib/urguard/certs/node-a.crt
+      URGUARD_TLS_KEY_FILE: /var/lib/urguard/certs/node-a.key
+      URGUARD_AUTHORITY_PUBLIC_FILE: /var/lib/urguard/shared/authority.pub
       URGUARD_CONTROLPLANE_URL: https://controlplane:8080
+      URGUARD_NODE_URLS: https://node-a:8081,https://node-b:8081,https://node-c:8081
+      URGUARD_REQUIRED_NODES: node-a,node-b,node-c
       URGUARD_ROTATION_GRACE_SEC: "${URGUARD_ROTATION_GRACE_SEC:-30}"
-      URGUARD_TLS_MODE: "${URGUARD_TLS_MODE:-pqc-mtls}"
-      URGUARD_DATA_DIR: /var/lib/urguard/data
-      URGUARD_RUNTIME_CERT_DIR: /var/lib/urguard/certs
+      URGUARD_MAX_CLOCK_SKEW_SEC: "${URGUARD_MAX_CLOCK_SKEW_SEC:-30}"
+      URGUARD_CRL_HEARTBEAT_MS: "${URGUARD_CRL_HEARTBEAT_MS:-1000}"
+      URGUARD_CHECKPOINT_INTERVAL: "${URGUARD_CHECKPOINT_INTERVAL:-25}"
     ports:
       - "${URGUARD_NODE_A_PORT:-8081}:8081"
     volumes:
       - node-a-data:/var/lib/urguard/data
       - urguard-certs:/var/lib/urguard/certs:ro
+      - urguard-shared:/var/lib/urguard/shared:ro
     depends_on:
       certs-init:
         condition: service_completed_successfully
-      controlplane:
-        condition: service_healthy
     networks:
       - urguard-net
     healthcheck:
-      test: ["CMD", "/usr/local/bin/healthcheck", "http://127.0.0.1:8081/healthz"]
+      test: ["CMD", "/usr/local/bin/healthcheck", "https://localhost:8081/healthz"]
       interval: 10s
       timeout: 3s
-      retries: 5
-      start_period: 10s
+      retries: 6
+      start_period: 15s
 
   node-b:
     build:
@@ -89,30 +114,38 @@ services:
         required: false
     environment:
       URGUARD_NODE_ID: node-b
-      URGUARD_LISTEN_ADDR: ":8081"
+      URGUARD_NODE_ADDR: "0.0.0.0:8081"
+      URGUARD_NODE_DB_PATH: /var/lib/urguard/data/node.bbolt
+      URGUARD_WITNESS_DB_PATH: /var/lib/urguard/data/witness.bbolt
+      URGUARD_CP_GRPC_TLS: "${URGUARD_CP_GRPC_TLS:-true}"
+      URGUARD_TLS_CA_FILE: /var/lib/urguard/certs/ca.crt
+      URGUARD_TLS_CERT_FILE: /var/lib/urguard/certs/node-b.crt
+      URGUARD_TLS_KEY_FILE: /var/lib/urguard/certs/node-b.key
+      URGUARD_AUTHORITY_PUBLIC_FILE: /var/lib/urguard/shared/authority.pub
       URGUARD_CONTROLPLANE_URL: https://controlplane:8080
+      URGUARD_NODE_URLS: https://node-a:8081,https://node-b:8081,https://node-c:8081
+      URGUARD_REQUIRED_NODES: node-a,node-b,node-c
       URGUARD_ROTATION_GRACE_SEC: "${URGUARD_ROTATION_GRACE_SEC:-30}"
-      URGUARD_TLS_MODE: "${URGUARD_TLS_MODE:-pqc-mtls}"
-      URGUARD_DATA_DIR: /var/lib/urguard/data
-      URGUARD_RUNTIME_CERT_DIR: /var/lib/urguard/certs
+      URGUARD_MAX_CLOCK_SKEW_SEC: "${URGUARD_MAX_CLOCK_SKEW_SEC:-30}"
+      URGUARD_CRL_HEARTBEAT_MS: "${URGUARD_CRL_HEARTBEAT_MS:-1000}"
+      URGUARD_CHECKPOINT_INTERVAL: "${URGUARD_CHECKPOINT_INTERVAL:-25}"
     ports:
       - "${URGUARD_NODE_B_PORT:-8082}:8081"
     volumes:
       - node-b-data:/var/lib/urguard/data
       - urguard-certs:/var/lib/urguard/certs:ro
+      - urguard-shared:/var/lib/urguard/shared:ro
     depends_on:
       certs-init:
         condition: service_completed_successfully
-      controlplane:
-        condition: service_healthy
     networks:
       - urguard-net
     healthcheck:
-      test: ["CMD", "/usr/local/bin/healthcheck", "http://127.0.0.1:8081/healthz"]
+      test: ["CMD", "/usr/local/bin/healthcheck", "https://localhost:8081/healthz"]
       interval: 10s
       timeout: 3s
-      retries: 5
-      start_period: 10s
+      retries: 6
+      start_period: 15s
 
   node-c:
     build:
@@ -123,30 +156,38 @@ services:
         required: false
     environment:
       URGUARD_NODE_ID: node-c
-      URGUARD_LISTEN_ADDR: ":8081"
+      URGUARD_NODE_ADDR: "0.0.0.0:8081"
+      URGUARD_NODE_DB_PATH: /var/lib/urguard/data/node.bbolt
+      URGUARD_WITNESS_DB_PATH: /var/lib/urguard/data/witness.bbolt
+      URGUARD_CP_GRPC_TLS: "${URGUARD_CP_GRPC_TLS:-true}"
+      URGUARD_TLS_CA_FILE: /var/lib/urguard/certs/ca.crt
+      URGUARD_TLS_CERT_FILE: /var/lib/urguard/certs/node-c.crt
+      URGUARD_TLS_KEY_FILE: /var/lib/urguard/certs/node-c.key
+      URGUARD_AUTHORITY_PUBLIC_FILE: /var/lib/urguard/shared/authority.pub
       URGUARD_CONTROLPLANE_URL: https://controlplane:8080
+      URGUARD_NODE_URLS: https://node-a:8081,https://node-b:8081,https://node-c:8081
+      URGUARD_REQUIRED_NODES: node-a,node-b,node-c
       URGUARD_ROTATION_GRACE_SEC: "${URGUARD_ROTATION_GRACE_SEC:-30}"
-      URGUARD_TLS_MODE: "${URGUARD_TLS_MODE:-pqc-mtls}"
-      URGUARD_DATA_DIR: /var/lib/urguard/data
-      URGUARD_RUNTIME_CERT_DIR: /var/lib/urguard/certs
+      URGUARD_MAX_CLOCK_SKEW_SEC: "${URGUARD_MAX_CLOCK_SKEW_SEC:-30}"
+      URGUARD_CRL_HEARTBEAT_MS: "${URGUARD_CRL_HEARTBEAT_MS:-1000}"
+      URGUARD_CHECKPOINT_INTERVAL: "${URGUARD_CHECKPOINT_INTERVAL:-25}"
     ports:
       - "${URGUARD_NODE_C_PORT:-8083}:8081"
     volumes:
       - node-c-data:/var/lib/urguard/data
       - urguard-certs:/var/lib/urguard/certs:ro
+      - urguard-shared:/var/lib/urguard/shared:ro
     depends_on:
       certs-init:
         condition: service_completed_successfully
-      controlplane:
-        condition: service_healthy
     networks:
       - urguard-net
     healthcheck:
-      test: ["CMD", "/usr/local/bin/healthcheck", "http://127.0.0.1:8081/healthz"]
+      test: ["CMD", "/usr/local/bin/healthcheck", "https://localhost:8081/healthz"]
       interval: 10s
       timeout: 3s
-      retries: 5
-      start_period: 10s
+      retries: 6
+      start_period: 15s
 
   frontend:
     build:
@@ -162,6 +203,8 @@ services:
         required: false
     ports:
       - "${URGUARD_FRONTEND_PORT:-5173}:80"
+    volumes:
+      - urguard-certs:/etc/nginx/certs:ro
     depends_on:
       controlplane:
         condition: service_healthy
@@ -186,6 +229,7 @@ networks:
 
 volumes:
   urguard-certs:
+  urguard-shared:
   controlplane-data:
   node-a-data:
   node-b-data:

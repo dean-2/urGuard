@@ -124,14 +124,22 @@ func (ts *TelemetryService) handleMetrics(w http.ResponseWriter, r *http.Request
 	})
 }
 
-func (ts *TelemetryService) handleGraph(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+// GraphEdges returns a snapshot copy of all observed edges.
+func (ts *TelemetryService) GraphEdges() []GraphEdgeSnapshot {
 	ts.mu.RLock()
 	defer ts.mu.RUnlock()
+	return ts.graphEdgesLocked()
+}
 
+// Snapshot returns thread-safe copies of alerts, evaluation metrics, graph edges, and skew window.
+func (ts *TelemetryService) Snapshot() ([]Alert, EvalMetrics, []GraphEdgeSnapshot, time.Duration) {
+	ts.mu.RLock()
+	defer ts.mu.RUnlock()
+	alerts := append([]Alert(nil), ts.alerts...)
+	return alerts, ts.metrics, ts.graphEdgesLocked(), ts.maxSkew
+}
+
+func (ts *TelemetryService) graphEdgesLocked() []GraphEdgeSnapshot {
 	counts := make(map[string]int)
 	edgeMeta := make(map[string]GraphEdgeSnapshot)
 	for _, ev := range ts.events {
@@ -153,6 +161,15 @@ func (ts *TelemetryService) handleGraph(w http.ResponseWriter, r *http.Request) 
 	for _, e := range edgeMeta {
 		edges = append(edges, e)
 	}
+	return edges
+}
+
+func (ts *TelemetryService) handleGraph(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	edges := ts.GraphEdges()
 	writeJSON(w, http.StatusOK, map[string]any{
 		"edges": edges,
 	})

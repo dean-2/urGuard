@@ -1,23 +1,25 @@
-"""One JSON request per process. Team code owns all application behavior."""
+"""Official Track 4 judging adapter entry point (one JSON request per process)."""
 import json
 import sys
+
 from team_app import dispatch
 
 
-def main():
+def main() -> int:
     try:
         request = json.load(sys.stdin)
         if not isinstance(request, dict):
-            raise ValueError("Request must be an object")
+            raise ValueError("Request must be a JSON object")
         response = dispatch(request)
         if not isinstance(response, dict):
-            raise ValueError("Response must be an object")
+            raise ValueError("Response must be a JSON object")
         encoded = json.dumps(response, allow_nan=False)
     except Exception:
-        # Do not print request data or exception details that could contain secrets.
+        # Never print request fields, secrets, or protected content to stderr.
         print("Request failed; inspect team application locally.", file=sys.stderr)
         return 1
     sys.stdout.write(encoded + "\n")
+    sys.stdout.flush()
     return 0
 
 

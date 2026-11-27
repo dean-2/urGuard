@@ -264,6 +264,33 @@ func (s *Store) CommitPreparedRotation(prepared uint64, grace time.Duration, hoo
 	return state, nil
 }
 
+// EnforceCutoff expires the active rotation grace window immediately.
+func (s *Store) EnforceCutoff(hooks ...CommitHook) (EpochState, error) {
+	var state EpochState
+	err := s.update(hooks, func(tx *bolt.Tx) error {
+		var err error
+		state, err = readState(tx)
+		if err != nil {
+			return err
+		}
+		if state.Prepared != 0 || state.CommittedAt.IsZero() {
+			return ErrConflict
+		}
+		now := time.Now().UTC()
+		if state.CutoffAt.After(now) {
+			state.CutoffAt = now
+		}
+		if err = saveState(tx, state); err != nil {
+			return err
+		}
+		return changed(tx)
+	})
+	if err != nil {
+		return EpochState{}, err
+	}
+	return state, nil
+}
+
 func validID(id string) bool {
 	return utf8.ValidString(id) && strings.TrimSpace(id) != "" && !strings.ContainsRune(id, 0)
 }

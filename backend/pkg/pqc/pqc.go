@@ -251,7 +251,7 @@ func OpenAEAD(key, nonce, ciphertext, aad []byte) ([]byte, error) {
 }
 
 func hybridTLSConfig() *tls.Config {
-	return &tls.Config{MinVersion: tls.VersionTLS13, CurvePreferences: []tls.CurveID{tls.X25519MLKEM768}, NextProtos: []string{"h2"}}
+	return &tls.Config{MinVersion: tls.VersionTLS13, CurvePreferences: []tls.CurveID{tls.X25519MLKEM768, tls.X25519}, NextProtos: []string{"h2", "http/1.1"}}
 }
 
 // NewHybridTLSServerConfig requires verified client certificates when clientCAs is supplied.
