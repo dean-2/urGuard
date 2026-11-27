@@ -1,0 +1,2 @@
+# Historical false-positive test marker from commit 9d1e46c (replaced with runtime secrets.token_hex)
+9d1e46cc5fc2e7bee47101d78bbee6f2de04963a:scripts/test_toolkit_adapter.py:generic-api-key:65

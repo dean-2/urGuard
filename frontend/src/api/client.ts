@@ -1,11 +1,7 @@
 import { createClient, type Transport } from '@connectrpc/connect';
 import { createConnectTransport } from '@connectrpc/connect-web';
-import {
-  CryptoControlService,
-} from '../gen/urguard/v1/crypto_control_pb.ts';
-import {
-  TelemetryService,
-} from '../gen/urguard/v1/telemetry_pb.ts';
+import { CryptoControlService } from '../gen/urguard/v1/crypto_control_pb.ts';
+import { TelemetryService } from '../gen/urguard/v1/telemetry_pb.ts';
 import type {
   AccessGraph,
   AuditRecord,
@@ -194,7 +190,10 @@ export function createConnectUrGuardClient(baseUrl: string): LiveUrGuardClient {
     }
     if (!res.ok) {
       const errMsg =
-        parsed && typeof parsed === 'object' && 'error' in parsed && typeof parsed.error === 'string'
+        parsed &&
+        typeof parsed === 'object' &&
+        'error' in parsed &&
+        typeof parsed.error === 'string'
           ? parsed.error
           : `Request failed (${String(res.status)}): ${text}`;
       throw new Error(errMsg);
@@ -263,7 +262,9 @@ export function createConnectUrGuardClient(baseUrl: string): LiveUrGuardClient {
       if (prepared === 0n) {
         const active = current.state?.activeEpoch ?? 1n;
         const prepRes = await controlRpc.prepareRotation({ expectedActiveEpoch: active });
-        await controlRpc.commitRotation({ preparedEpoch: prepRes.state?.preparedEpoch ?? active + 1n });
+        await controlRpc.commitRotation({
+          preparedEpoch: prepRes.state?.preparedEpoch ?? active + 1n,
+        });
       } else {
         await controlRpc.commitRotation({ preparedEpoch: prepared });
       }
